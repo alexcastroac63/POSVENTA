@@ -16,19 +16,36 @@ export interface User {
 
 export type SalesChannel = 'mesa' | 'llevar' | 'delivery';
 
+export type TableStatus =
+  | 'libre'
+  | 'ocupada'
+  | 'precuenta'
+  | 'limpieza'
+  | 'reservada'
+  | 'Available'
+  | 'Occupied'
+  | 'Cleaning'
+  | 'Reserved';
+
 export interface Table {
   id: string;
   number: number;
   salonId: string;
   salonName: string;
   seats: number;
-  status: 'libre' | 'ocupada' | 'precuenta' | 'limpieza';
+  status: TableStatus;
   currentOrderId?: string;
   waiterId?: string;
   waiterName?: string;
   totalAmount?: number;
   guestsCount?: number;
   openedAt?: string;
+  reservationInfo?: {
+    customerName: string;
+    time: string;
+    partySize: number;
+    phone?: string;
+  };
 }
 
 export interface ModifierOption {
@@ -173,7 +190,18 @@ export interface AuditLog {
   userId: string;
   userName: string;
   userRole: UserRole;
-  action: 'CREAR_ORDEN' | 'EDITAR_ORDEN' | 'CANCELAR_ORDEN' | 'APLICAR_DESCUENTO' | 'ELIMINAR_ITEM' | 'UNIR_MESAS' | 'DIVIDIR_CUENTA' | 'CORTE_CAJA' | 'CIERRE_CAJA' | 'REASIGNAR_MESA';
+  action:
+    | 'CREAR_ORDEN'
+    | 'EDITAR_ORDEN'
+    | 'CANCELAR_ORDEN'
+    | 'APLICAR_DESCUENTO'
+    | 'ELIMINAR_ITEM'
+    | 'UNIR_MESAS'
+    | 'DIVIDIR_CUENTA'
+    | 'CORTE_CAJA'
+    | 'CIERRE_CAJA'
+    | 'REASIGNAR_MESA'
+    | 'CAMBIAR_ESTADO_MESA';
   description: string;
   supervisorName?: string;
   metadata?: Record<string, any>;

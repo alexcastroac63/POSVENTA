@@ -28,20 +28,7 @@ export const ChannelSelectScreen: React.FC = () => {
   const occupiedTablesCount = tables.filter((t) => t.status === 'ocupada').length;
 
   return (
-    <div className="flex-1 bg-slate-50 flex flex-col justify-between p-4 sm:p-8 select-none font-sans overflow-y-auto">
-      {/* Header Info */}
-      <div className="text-center max-w-2xl mx-auto my-4 sm:my-8">
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 border border-emerald-200 text-emerald-800 mb-2.5 shadow-2xs">
-          <Sparkles className="w-3.5 h-3.5 text-emerald-600" /> Arquitectura Omnicanal Sincronizada
-        </span>
-        <h2 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight uppercase">
-          Seleccione el Canal de Atención
-        </h2>
-        <p className="text-sm text-slate-500 mt-1.5">
-          Las tarifas, listas de precios e impresiones de comanda se adaptan automáticamente según el canal seleccionado.
-        </p>
-      </div>
-
+    <div className="flex-1 bg-slate-50 flex flex-col justify-center p-4 sm:p-8 select-none font-sans overflow-y-auto">
       {/* 3 Channel Cards (CANAL A, CANAL B, CANAL C) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl mx-auto my-auto">
         {/* CANAL A: MESA */}
@@ -55,12 +42,9 @@ export const ChannelSelectScreen: React.FC = () => {
           <span className="text-xs font-mono font-bold text-slate-400 uppercase tracking-widest mb-1">
             CANAL A
           </span>
-          <h3 className="text-xl sm:text-2xl font-black text-slate-900 uppercase mb-2 group-hover:text-emerald-700 transition">
+          <h3 className="text-xl sm:text-2xl font-black text-slate-900 uppercase mb-4 group-hover:text-emerald-700 transition">
             MESA (Salón)
           </h3>
-          <p className="text-xs text-slate-500 leading-relaxed mb-6">
-            Servicio a pie de mesa, comanda por salón, precuentas impresas y división de cuentas por comensal.
-          </p>
           <div className="mt-auto w-full pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-emerald-700 font-bold">
             <span>{occupiedTablesCount} Mesas activas</span>
             <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition" />
@@ -78,12 +62,9 @@ export const ChannelSelectScreen: React.FC = () => {
           <span className="text-xs font-mono font-bold text-slate-400 uppercase tracking-widest mb-1">
             CANAL B
           </span>
-          <h3 className="text-xl sm:text-2xl font-black text-slate-900 uppercase mb-2 group-hover:text-sky-700 transition">
+          <h3 className="text-xl sm:text-2xl font-black text-slate-900 uppercase mb-4 group-hover:text-sky-700 transition">
             LLEVAR (Take Out)
           </h3>
-          <p className="text-xs text-slate-500 leading-relaxed mb-6">
-            Atención rápida en mostrador, empaque para llevar, cobro expedito y aviso por turno de recogida.
-          </p>
           <div className="mt-auto w-full pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-sky-700 font-bold">
             <span>Tarifa Mostrador</span>
             <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition" />
@@ -98,12 +79,9 @@ export const ChannelSelectScreen: React.FC = () => {
           <span className="text-xs font-mono font-bold text-slate-400 uppercase tracking-widest mb-1">
             CANAL C
           </span>
-          <h3 className="text-xl sm:text-2xl font-black text-slate-900 uppercase mb-2 group-hover:text-amber-700 transition">
+          <h3 className="text-xl sm:text-2xl font-black text-slate-900 uppercase mb-4 group-hover:text-amber-700 transition">
             PLATAFORMAS
           </h3>
-          <p className="text-xs text-slate-500 leading-relaxed mb-4">
-            Tarifas diferenciadas automáticas (+18%), gestión de repartidores y visibilidad de platillos por plataforma.
-          </p>
 
           {/* Platform selector */}
           <div className="w-full grid grid-cols-3 gap-1 bg-slate-100 p-1.5 rounded-xl border border-slate-200 mb-4 text-[11px] font-bold">

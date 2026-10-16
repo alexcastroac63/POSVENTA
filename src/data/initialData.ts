@@ -47,12 +47,38 @@ export const INITIAL_TABLES: Table[] = [
   { id: 't-103', number: 3, salonId: 'salon-1', salonName: 'Salón 1', seats: 4, status: 'libre' },
   { id: 't-104', number: 4, salonId: 'salon-1', salonName: 'Salón 1', seats: 6, status: 'ocupada', totalAmount: 92.10, guestsCount: 5, waiterName: 'Sofia Méndez', openedAt: '12:48' },
   { id: 't-105', number: 5, salonId: 'salon-1', salonName: 'Salón 1', seats: 2, status: 'libre' },
-  { id: 't-106', number: 6, salonId: 'salon-1', salonName: 'Salón 1', seats: 8, status: 'libre' },
+  {
+    id: 't-106',
+    number: 6,
+    salonId: 'salon-1',
+    salonName: 'Salón 1',
+    seats: 8,
+    status: 'reservada',
+    reservationInfo: {
+      customerName: 'Familia Gómez',
+      time: '14:30',
+      partySize: 6,
+      phone: '+34 611 223 344',
+    },
+  },
 
   // Salón 2 (Zona Lounge)
   { id: 't-201', number: 7, salonId: 'salon-2', salonName: 'Salón 2', seats: 4, status: 'libre' },
   { id: 't-202', number: 8, salonId: 'salon-2', salonName: 'Salón 2', seats: 4, status: 'ocupada', totalAmount: 45.00, guestsCount: 2, waiterName: 'Sofia Méndez', openedAt: '13:02' },
-  { id: 't-203', number: 9, salonId: 'salon-2', salonName: 'Salón 2', seats: 6, status: 'libre' },
+  {
+    id: 't-203',
+    number: 9,
+    salonId: 'salon-2',
+    salonName: 'Salón 2',
+    seats: 6,
+    status: 'reservada',
+    reservationInfo: {
+      customerName: 'Reunión Directiva Tech',
+      time: '15:00',
+      partySize: 4,
+      phone: '+34 699 887 766',
+    },
+  },
   { id: 't-204', number: 10, salonId: 'salon-2', salonName: 'Salón 2', seats: 2, status: 'limpieza' },
 
   // Salón 3 (Terraza Exterior)

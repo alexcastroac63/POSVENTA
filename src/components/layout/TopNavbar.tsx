@@ -8,16 +8,12 @@ import { useRestaurant, ActiveScreen } from '../../context/RestaurantContext';
 import { INITIAL_USERS } from '../../data/initialData';
 import {
   UtensilsCrossed,
-  LayoutGrid,
-  ShoppingCart,
   ChefHat,
   Receipt,
   BarChart3,
   GitBranch,
   LogOut,
   ChevronDown,
-  Building2,
-  Cpu,
   UserCheck,
 } from 'lucide-react';
 
@@ -25,9 +21,6 @@ export const TopNavbar: React.FC = () => {
   const {
     currentUser,
     setCurrentUser,
-    branch,
-    setBranch,
-    terminalId,
     currentScreen,
     setCurrentScreen,
     logout,
@@ -42,8 +35,6 @@ export const TopNavbar: React.FC = () => {
 
   const navItems: { screen: ActiveScreen; label: string; icon: React.ReactNode; badge?: number }[] = [
     { screen: 'channel_select', label: 'Canales', icon: <UtensilsCrossed className="w-4 h-4" /> },
-    { screen: 'table_map', label: 'Salón Mesas', icon: <LayoutGrid className="w-4 h-4" /> },
-    { screen: 'pos_order', label: 'Comanda POS', icon: <ShoppingCart className="w-4 h-4" /> },
     {
       screen: 'kds',
       label: 'KDS Cocina',
@@ -61,43 +52,15 @@ export const TopNavbar: React.FC = () => {
 
   return (
     <header className="bg-white text-slate-800 border-b border-slate-200 shadow-xs sticky top-0 z-40 select-none">
-      {/* Top Utility Strip (Executive Style) */}
-      <div className="px-4 py-1.5 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between text-xs text-slate-600 gap-2">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5 text-emerald-700 font-bold tracking-wide">
-            <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
-            RESTO-XYZ POS EJECUTIVO
-          </div>
-          <div className="hidden sm:flex items-center gap-1.5 text-slate-700">
-            <Building2 className="w-3.5 h-3.5 text-slate-500" />
-            <select
-              value={branch}
-              onChange={(e) => setBranch(e.target.value)}
-              className="bg-white border border-slate-300 rounded px-2 py-0.5 text-xs text-slate-800 font-medium focus:outline-none focus:border-emerald-600 cursor-pointer shadow-2xs"
-            >
-              <option value="Sucursal Central #01">Sucursal Central #01</option>
-              <option value="Sucursal Norte Mall">Sucursal Norte Mall</option>
-            </select>
-          </div>
-          <div className="hidden md:flex items-center gap-1 text-slate-600 font-mono text-[11px]">
-            <Cpu className="w-3.5 h-3.5 text-slate-400" />
-            <span>{terminalId}</span>
-          </div>
-        </div>
-
-        {/* Status indicator */}
-        <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-800 px-2.5 py-1 rounded-lg text-xs font-semibold shadow-2xs">
-          <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
-          <span>Terminal Activo • En Línea</span>
-        </div>
-      </div>
-
       {/* Main Nav Bar */}
       <div className="px-4 py-2 flex items-center justify-between gap-2 overflow-x-auto">
         {/* Navigation Tabs */}
         <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 scrollbar-thin">
           {navItems.map((item) => {
-            const isActive = currentScreen === item.screen;
+            const isActive =
+              currentScreen === item.screen ||
+              (item.screen === 'channel_select' &&
+                (currentScreen === 'table_map' || currentScreen === 'pos_order'));
             return (
               <button
                 key={item.screen}

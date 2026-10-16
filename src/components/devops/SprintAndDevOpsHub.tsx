@@ -30,41 +30,21 @@ export const SprintAndDevOpsHub: React.FC = () => {
 
   const nginxSnippet = `server {
     listen 80;
-    listen 3000;
     server_name localhost;
 
     root /usr/share/nginx/html;
     index index.html;
 
-    # Enrutamiento SPA (React / React Native Web)
+    # Soporte SPA: redirige cualquier ruta al index.html
     location / {
         try_files $uri $uri/ /index.html;
         add_header Cache-Control "no-cache, must-revalidate";
     }
 
-    # Health check
+    # Healthcheck para Docker
     location /health {
         access_log off;
         return 200 "healthy\\n";
-    }
-
-    # Proxy a API con resolución dinámica (evita que Nginx crashee si el backend no está iniciado)
-    location /api/ {
-        resolver 127.0.0.11 valid=30s ipv6=off;
-        set $backend_service "http://restoxyz-backend:5000";
-        proxy_pass $backend_service;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-
-        error_page 502 504 = @api_fallback;
-    }
-
-    location @api_fallback {
-        default_type application/json;
-        return 200 '{"status":"standalone","message":"POS Operando en modo local/independiente"}';
     }
 }`;
 
@@ -476,6 +456,20 @@ public class RestaurantHub : Hub {
 
       {activeTab === 'docker' && (
         <div className="mt-5 space-y-4">
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-xs">
+            <span className="font-bold text-amber-900 block mb-1">
+              ⚠️ ¿El puerto 8080 ya está ocupado en tu equipo?
+            </span>
+            <p className="text-amber-800 leading-relaxed mb-2">
+              Si tu sistema muestra <code className="bg-amber-100 px-1 rounded font-mono">port is already allocated</code> o el puerto 8080 está en uso por otro programa, simplemente asigna cualquier otro puerto libre a tu máquina:
+            </p>
+            <div className="space-y-1.5 font-mono text-[11px] bg-amber-100/70 p-2.5 rounded-lg border border-amber-200 text-amber-950">
+              <div><span className="text-slate-500 font-sans">Opción A (Puerto 8085):</span> <code className="font-bold">docker run -d -p 8085:80 --name mi-posventa posventa-app</code></div>
+              <div><span className="text-slate-500 font-sans">Opción B (Puerto 3001):</span> <code className="font-bold">docker run -d -p 3001:80 --name mi-posventa posventa-app</code></div>
+              <div><span className="text-slate-500 font-sans">Opción C (Puerto 8888):</span> <code className="font-bold">docker run -d -p 8888:80 --name mi-posventa posventa-app</code></div>
+            </div>
+          </div>
+
           <div className="flex items-center justify-between">
             <span className="text-xs font-mono font-bold text-sky-800 uppercase">
               docker-compose.yml (Orquestación de Multi-Contenedores)
