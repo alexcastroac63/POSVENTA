@@ -6,21 +6,9 @@
 import React, { useState } from 'react';
 import { useRestaurant } from '../../context/RestaurantContext';
 import {
-  GitBranch,
-  Layers,
-  Terminal,
-  Server,
-  Cloud,
   CheckCircle2,
-  Calendar,
-  Users,
   Copy,
   Check,
-  Code2,
-  FileCode,
-  Flame,
-  ShieldCheck,
-  Cpu,
 } from 'lucide-react';
 
 export const SprintAndDevOpsHub: React.FC = () => {
@@ -283,59 +271,59 @@ public class RestaurantHub : Hub {
 }`;
 
   return (
-    <div className="flex-1 bg-slate-900 flex flex-col p-3 sm:p-6 select-none font-sans overflow-y-auto">
+    <div className="flex-1 bg-slate-50 flex flex-col p-3 sm:p-6 select-none font-sans overflow-y-auto">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b border-slate-800 gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b border-slate-200 gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-            <h1 className="text-xl sm:text-2xl font-black text-white uppercase tracking-tight">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 uppercase tracking-tight">
               Metodología Ágil (Sprint 2 Semanas) & Arquitectura DevOps
             </h1>
           </div>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-slate-500 mt-0.5">
             Planificación ágil de Historias de Usuario (CU-01 a CU-13), Docker S3, Backend y Pipeline CI/CD.
           </p>
         </div>
 
         {/* Tab Buttons */}
-        <div className="flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800 overflow-x-auto text-xs font-bold">
+        <div className="flex items-center gap-1.5 bg-white p-1 rounded-xl border border-slate-300 overflow-x-auto text-xs font-bold shadow-2xs">
           <button
             onClick={() => setActiveTab('sprint')}
-            className={`px-3 py-1.5 rounded-lg transition ${
-              activeTab === 'sprint' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-white'
+            className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
+              activeTab === 'sprint' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             Tablero Sprint (2 Semanas)
           </button>
           <button
             onClick={() => setActiveTab('docker')}
-            className={`px-3 py-1.5 rounded-lg transition ${
-              activeTab === 'docker' ? 'bg-sky-600 text-white' : 'text-slate-400 hover:text-white'
+            className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
+              activeTab === 'docker' ? 'bg-sky-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             docker-compose.yml
           </button>
           <button
             onClick={() => setActiveTab('s3')}
-            className={`px-3 py-1.5 rounded-lg transition ${
-              activeTab === 's3' ? 'bg-amber-600 text-white' : 'text-slate-400 hover:text-white'
+            className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
+              activeTab === 's3' ? 'bg-amber-500 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             Almacenamiento S3 (MinIO)
           </button>
           <button
             onClick={() => setActiveTab('cicd')}
-            className={`px-3 py-1.5 rounded-lg transition ${
-              activeTab === 'cicd' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-white'
+            className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
+              activeTab === 'cicd' ? 'bg-purple-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             Pipeline CI/CD
           </button>
           <button
             onClick={() => setActiveTab('backend')}
-            className={`px-3 py-1.5 rounded-lg transition ${
-              activeTab === 'backend' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'
+            className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
+              activeTab === 'backend' ? 'bg-slate-800 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             Backend C# .NET 8 / SignalR
@@ -346,27 +334,27 @@ public class RestaurantHub : Hub {
       {activeTab === 'sprint' && (
         <div className="mt-5 space-y-6">
           {/* Sprint Meta Banner */}
-          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="bg-white border border-slate-300 rounded-2xl p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm">
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-500/30 uppercase">
+                <span className="text-[10px] font-mono font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 uppercase">
                   SPRINT 1 - RESTO-XYZ MVP OMNICANAL
                 </span>
-                <span className="text-xs text-slate-400 font-mono">Duración: 10 días hábiles (2 semanas)</span>
+                <span className="text-xs text-slate-500 font-mono">Duración: 10 días hábiles (2 semanas)</span>
               </div>
-              <h3 className="text-lg font-black text-white mt-1">
+              <h3 className="text-lg font-black text-slate-900 mt-1">
                 Objetivo del Sprint: Entrega Integral de Flujos POS, KDS, Cobros y Despliegue en Contenedores
               </h3>
             </div>
 
             <div className="flex items-center gap-4 text-xs font-mono">
               <div className="text-right">
-                <span className="text-slate-400 block text-[10px] uppercase">VELOCIDAD DEL SPRINT</span>
-                <span className="text-xl font-black text-emerald-400">{donePoints} / {totalPoints} Pts</span>
+                <span className="text-slate-500 block text-[10px] uppercase">VELOCIDAD DEL SPRINT</span>
+                <span className="text-xl font-black text-emerald-700">{donePoints} / {totalPoints} Pts</span>
               </div>
-              <div className="w-24 h-3 bg-slate-800 rounded-full overflow-hidden">
+              <div className="w-24 h-3 bg-slate-200 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-emerald-500 rounded-full"
+                  className="h-full bg-emerald-600 rounded-full"
                   style={{ width: `${Math.round((donePoints / totalPoints) * 100)}%` }}
                 ></div>
               </div>
@@ -375,69 +363,69 @@ public class RestaurantHub : Hub {
 
           {/* Agile Ceremonies Strip */}
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-            <div className="bg-slate-950/80 border border-slate-800 p-3 rounded-xl">
-              <span className="text-[10px] font-mono text-emerald-400 uppercase font-bold block">DÍA 1: PLANNING</span>
-              <span className="text-xs font-bold text-white block mt-0.5">Definición de Historias & Fichas Personas</span>
+            <div className="bg-white border border-slate-200 p-3 rounded-xl shadow-2xs">
+              <span className="text-[10px] font-mono text-emerald-700 uppercase font-bold block">DÍA 1: PLANNING</span>
+              <span className="text-xs font-bold text-slate-800 block mt-0.5">Definición de Historias & Fichas Personas</span>
               <span className="text-[10px] text-slate-500">Estimación en Story Points Fibonacci</span>
             </div>
-            <div className="bg-slate-950/80 border border-slate-800 p-3 rounded-xl">
-              <span className="text-[10px] font-mono text-sky-400 uppercase font-bold block">DIARIOS: STANDUPS</span>
-              <span className="text-xs font-bold text-white block mt-0.5">Sincronización 15 min a las 09:00</span>
+            <div className="bg-white border border-slate-200 p-3 rounded-xl shadow-2xs">
+              <span className="text-[10px] font-mono text-sky-700 uppercase font-bold block">DIARIOS: STANDUPS</span>
+              <span className="text-xs font-bold text-slate-800 block mt-0.5">Sincronización 15 min a las 09:00</span>
               <span className="text-[10px] text-slate-500">Bloqueos de Tablets y KDS</span>
             </div>
-            <div className="bg-slate-950/80 border border-slate-800 p-3 rounded-xl">
-              <span className="text-[10px] font-mono text-purple-400 uppercase font-bold block">DÍA 10: DEMO REVIEW</span>
-              <span className="text-xs font-bold text-white block mt-0.5">Demostración en Vivo del Flujo Wireframe</span>
+            <div className="bg-white border border-slate-200 p-3 rounded-xl shadow-2xs">
+              <span className="text-[10px] font-mono text-purple-700 uppercase font-bold block">DÍA 10: DEMO REVIEW</span>
+              <span className="text-xs font-bold text-slate-800 block mt-0.5">Demostración en Vivo del Flujo Wireframe</span>
               <span className="text-[10px] text-slate-500">Aprobación con Sofia, Carlos, Rodrigo y Elena</span>
             </div>
-            <div className="bg-slate-950/80 border border-slate-800 p-3 rounded-xl">
-              <span className="text-[10px] font-mono text-amber-400 uppercase font-bold block">DÍA 10: RETROSPECTIVA</span>
-              <span className="text-xs font-bold text-white block mt-0.5">Mejora Continua y Calidad de Código</span>
+            <div className="bg-white border border-slate-200 p-3 rounded-xl shadow-2xs">
+              <span className="text-[10px] font-mono text-amber-700 uppercase font-bold block">DÍA 10: RETROSPECTIVA</span>
+              <span className="text-xs font-bold text-slate-800 block mt-0.5">Mejora Continua y Calidad de Código</span>
               <span className="text-[10px] text-slate-500">Preparación para Sprint 2</span>
             </div>
           </div>
 
           {/* User Stories Cards */}
           <div>
-            <h4 className="text-sm font-black text-white uppercase tracking-wider mb-3">
+            <h4 className="text-sm font-black text-slate-900 uppercase tracking-wider mb-3">
               Historias de Usuario del Sprint (Mapeadas a Requerimientos):
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {sprintStories.map((story) => (
                 <div
                   key={story.id}
-                  className="bg-slate-950 border border-slate-800 hover:border-emerald-500/60 rounded-2xl p-4 flex flex-col justify-between transition group"
+                  className="bg-white border border-slate-200 hover:border-emerald-500 rounded-2xl p-4 flex flex-col justify-between transition group shadow-2xs hover:shadow-sm"
                 >
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10px] font-mono font-bold bg-slate-900 border border-slate-700 text-emerald-400 px-2 py-0.5 rounded">
+                      <span className="text-[10px] font-mono font-bold bg-slate-100 border border-slate-200 text-emerald-800 px-2 py-0.5 rounded">
                         {story.code}
                       </span>
-                      <span className="text-[10px] font-mono font-bold text-amber-400 bg-amber-950/60 px-2 py-0.5 rounded border border-amber-500/30">
+                      <span className="text-[10px] font-mono font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
                         {story.storyPoints} Story Points
                       </span>
                     </div>
 
-                    <span className="text-[11px] font-bold text-sky-400 block mb-1">
+                    <span className="text-[11px] font-bold text-sky-700 block mb-1">
                       {story.persona}
                     </span>
 
-                    <h5 className="text-xs sm:text-sm font-black text-white leading-snug group-hover:text-emerald-300 transition">
+                    <h5 className="text-xs sm:text-sm font-black text-slate-900 leading-snug group-hover:text-emerald-700 transition">
                       {story.title}
                     </h5>
 
-                    <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
+                    <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
                       {story.description}
                     </p>
 
-                    <div className="mt-3 pt-2 border-t border-slate-900">
-                      <span className="text-[10px] font-mono uppercase text-slate-500 block font-bold mb-1">
+                    <div className="mt-3 pt-2 border-t border-slate-100">
+                      <span className="text-[10px] font-mono uppercase text-slate-400 block font-bold mb-1">
                         Criterios de Aceptación:
                       </span>
-                      <ul className="text-[10px] text-slate-300 space-y-0.5">
+                      <ul className="text-[10px] text-slate-600 space-y-0.5">
                         {story.acceptanceCriteria.map((ac, i) => (
                           <li key={i} className="flex items-center gap-1.5">
-                            <CheckCircle2 className="w-3 h-3 text-emerald-400 flex-shrink-0" />
+                            <CheckCircle2 className="w-3 h-3 text-emerald-600 flex-shrink-0" />
                             <span>{ac}</span>
                           </li>
                         ))}
@@ -445,9 +433,9 @@ public class RestaurantHub : Hub {
                     </div>
                   </div>
 
-                  <div className="mt-3 pt-3 border-t border-slate-900 flex items-center justify-between text-[10px] font-mono">
+                  <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[10px] font-mono">
                     <span className="text-slate-500">Día {story.dayAssigned}</span>
-                    <span className="text-emerald-400 font-bold bg-emerald-950 px-2 py-0.5 rounded border border-emerald-500/30">
+                    <span className="text-emerald-800 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
                       COMPLETADA ✓
                     </span>
                   </div>
@@ -461,18 +449,18 @@ public class RestaurantHub : Hub {
       {activeTab === 'docker' && (
         <div className="mt-5 space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-mono font-bold text-sky-400 uppercase">
+            <span className="text-xs font-mono font-bold text-sky-800 uppercase">
               docker-compose.yml (Orquestación de Multi-Contenedores)
             </span>
             <button
               onClick={() => copyToClipboard(dockerComposeSnippet, 'compose')}
-              className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition"
+              className="px-3 py-1.5 bg-white hover:bg-slate-100 border border-slate-300 text-slate-800 rounded-lg text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
             >
-              {copiedKey === 'compose' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              {copiedKey === 'compose' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
               <span>{copiedKey === 'compose' ? 'Copiado' : 'Copiar docker-compose.yml'}</span>
             </button>
           </div>
-          <pre className="p-4 bg-slate-950 border border-slate-800 rounded-2xl text-xs font-mono text-slate-300 overflow-x-auto leading-relaxed">
+          <pre className="p-4 bg-slate-900 border border-slate-800 rounded-2xl text-xs font-mono text-slate-200 overflow-x-auto leading-relaxed shadow-sm">
             {dockerComposeSnippet}
           </pre>
         </div>
@@ -481,18 +469,18 @@ public class RestaurantHub : Hub {
       {activeTab === 's3' && (
         <div className="mt-5 space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-mono font-bold text-amber-400 uppercase">
+            <span className="text-xs font-mono font-bold text-amber-800 uppercase">
               Dockerfile (Multi-Stage Build para Producción)
             </span>
             <button
               onClick={() => copyToClipboard(dockerfileSnippet, 'dockerfile')}
-              className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition"
+              className="px-3 py-1.5 bg-white hover:bg-slate-100 border border-slate-300 text-slate-800 rounded-lg text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
             >
-              {copiedKey === 'dockerfile' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              {copiedKey === 'dockerfile' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
               <span>{copiedKey === 'dockerfile' ? 'Copiado' : 'Copiar Dockerfile'}</span>
             </button>
           </div>
-          <pre className="p-4 bg-slate-950 border border-slate-800 rounded-2xl text-xs font-mono text-slate-300 overflow-x-auto leading-relaxed">
+          <pre className="p-4 bg-slate-900 border border-slate-800 rounded-2xl text-xs font-mono text-slate-200 overflow-x-auto leading-relaxed shadow-sm">
             {dockerfileSnippet}
           </pre>
         </div>
@@ -501,18 +489,18 @@ public class RestaurantHub : Hub {
       {activeTab === 'cicd' && (
         <div className="mt-5 space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-mono font-bold text-purple-400 uppercase">
+            <span className="text-xs font-mono font-bold text-purple-800 uppercase">
               .github/workflows/ci-cd.yml (Pipeline Automatizado)
             </span>
             <button
               onClick={() => copyToClipboard(cicdSnippet, 'cicd')}
-              className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition"
+              className="px-3 py-1.5 bg-white hover:bg-slate-100 border border-slate-300 text-slate-800 rounded-lg text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
             >
-              {copiedKey === 'cicd' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              {copiedKey === 'cicd' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
               <span>{copiedKey === 'cicd' ? 'Copiado' : 'Copiar Pipeline CI/CD'}</span>
             </button>
           </div>
-          <pre className="p-4 bg-slate-950 border border-slate-800 rounded-2xl text-xs font-mono text-slate-300 overflow-x-auto leading-relaxed">
+          <pre className="p-4 bg-slate-900 border border-slate-800 rounded-2xl text-xs font-mono text-slate-200 overflow-x-auto leading-relaxed shadow-sm">
             {cicdSnippet}
           </pre>
         </div>
@@ -521,18 +509,18 @@ public class RestaurantHub : Hub {
       {activeTab === 'backend' && (
         <div className="mt-5 space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-mono font-bold text-blue-400 uppercase">
+            <span className="text-xs font-mono font-bold text-slate-800 uppercase">
               Program.cs (Backend C# .NET 8 WebAPI + SignalR + S3 Client)
             </span>
             <button
               onClick={() => copyToClipboard(csharpSnippet, 'csharp')}
-              className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition"
+              className="px-3 py-1.5 bg-white hover:bg-slate-100 border border-slate-300 text-slate-800 rounded-lg text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
             >
-              {copiedKey === 'csharp' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              {copiedKey === 'csharp' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
               <span>{copiedKey === 'csharp' ? 'Copiado' : 'Copiar Program.cs'}</span>
             </button>
           </div>
-          <pre className="p-4 bg-slate-950 border border-slate-800 rounded-2xl text-xs font-mono text-slate-300 overflow-x-auto leading-relaxed">
+          <pre className="p-4 bg-slate-900 border border-slate-800 rounded-2xl text-xs font-mono text-slate-200 overflow-x-auto leading-relaxed shadow-sm">
             {csharpSnippet}
           </pre>
         </div>

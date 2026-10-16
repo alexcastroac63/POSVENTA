@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useRef } from 'react';
+import React from 'react';
 import { useRestaurant } from '../../context/RestaurantContext';
-import { X, Printer, Share2, CheckCircle2, QrCode, AlertTriangle } from 'lucide-react';
+import { X, Printer, CheckCircle2, QrCode } from 'lucide-react';
 
 export const PreBillModal: React.FC = () => {
   const {
@@ -51,29 +51,29 @@ export const PreBillModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 font-sans animate-fadeIn">
-      <div className="w-full max-w-md bg-slate-900 border-2 border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
+    <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 font-sans animate-fadeIn">
+      <div className="w-full max-w-md bg-white border border-slate-300 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
         {/* Header */}
-        <div className="bg-slate-800 px-5 py-3 border-b-2 border-slate-700 flex items-center justify-between">
+        <div className="bg-slate-100 px-5 py-3 border-b border-slate-200 flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-mono font-bold text-purple-400 uppercase tracking-wider block">
+            <span className="text-[10px] font-mono font-bold text-purple-700 uppercase tracking-wider block">
               CU-07: EMISIÓN DE PRECUENTAS
             </span>
-            <h3 className="text-base font-black text-white uppercase">
+            <h3 className="text-base font-black text-slate-900 uppercase">
               Ticket Previo para el Cliente
             </h3>
           </div>
           <button
             onClick={() => setShowPreBillModal(false)}
-            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-700"
+            className="p-1.5 text-slate-500 hover:text-slate-900 rounded-lg hover:bg-slate-200 cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Thermal Receipt Styling Container */}
-        <div className="flex-1 overflow-y-auto p-4 bg-slate-950/50">
-          <div className="bg-[#fefee9] text-slate-900 p-5 rounded-lg shadow-inner font-mono text-xs border border-amber-200/60 mx-auto max-w-xs">
+        <div className="flex-1 overflow-y-auto p-4 bg-slate-100/60">
+          <div className="bg-[#fefee9] text-slate-900 p-5 rounded-lg shadow-sm font-mono text-xs border border-amber-200/80 mx-auto max-w-xs">
             {/* Restaurant Heading */}
             <div className="text-center pb-3 border-b-2 border-dashed border-slate-400">
               <div className="font-black text-sm uppercase tracking-wider">RESTAURANTE XYZ</div>
@@ -177,10 +177,10 @@ export const PreBillModal: React.FC = () => {
         </div>
 
         {/* Action Buttons */}
-        <div className="p-3 bg-slate-900 border-t border-slate-800 flex items-center justify-between gap-2">
+        <div className="p-3 bg-white border-t border-slate-200 flex items-center justify-between gap-2">
           <button
             onClick={() => setShowPreBillModal(false)}
-            className="px-3 py-2 text-xs font-bold text-slate-300 hover:bg-slate-800 rounded-xl transition"
+            className="px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition cursor-pointer"
           >
             Cerrar
           </button>
@@ -188,7 +188,7 @@ export const PreBillModal: React.FC = () => {
           <div className="flex items-center gap-2">
             <button
               onClick={handleMarkPreBill}
-              className="px-3 py-2 bg-purple-950 hover:bg-purple-900 border border-purple-500/50 text-purple-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5"
+              className="px-3 py-2 bg-purple-50 hover:bg-purple-100 border border-purple-300 text-purple-800 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
             >
               <CheckCircle2 className="w-3.5 h-3.5" />
               <span>Marcar Precuenta</span>
@@ -196,7 +196,7 @@ export const PreBillModal: React.FC = () => {
 
             <button
               onClick={handlePrint}
-              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-black uppercase tracking-wider transition flex items-center gap-1.5 shadow-lg shadow-emerald-950/40"
+              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition flex items-center gap-1.5 shadow-sm cursor-pointer"
             >
               <Printer className="w-3.5 h-3.5" />
               <span>Imprimir Ticket</span>
