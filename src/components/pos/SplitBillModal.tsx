@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRestaurant } from '../../context/RestaurantContext';
 import { SplitSubBill } from '../../types/restaurant';
 import { X, Users, UserPlus, Check } from 'lucide-react';
@@ -24,16 +24,21 @@ export const SplitBillModal: React.FC = () => {
     showToast,
   } = useRestaurant();
 
+  const [guests, setGuests] = useState<GuestBill[]>([]);
+  const [newGuestName, setNewGuestName] = useState('');
+
+  useEffect(() => {
+    if (showSplitModal && activeCartItems.length > 0) {
+      setGuests([
+        { id: 'g-1', name: 'Comensal 1 (Pedro)', itemIds: activeCartItems.slice(0, Math.ceil(activeCartItems.length / 2)).map((i) => i.id) },
+        { id: 'g-2', name: 'Comensal 2 (Laura)', itemIds: activeCartItems.slice(Math.ceil(activeCartItems.length / 2)).map((i) => i.id) },
+      ]);
+    }
+  }, [showSplitModal, activeCartItems]);
+
   if (!showSplitModal) return null;
 
   const totalBillAmount = activeCartItems.reduce((acc, i) => acc + i.subtotal, 0) * 1.1;
-
-  const [guests, setGuests] = useState<GuestBill[]>([
-    { id: 'g-1', name: 'Comensal 1 (Pedro)', itemIds: activeCartItems.slice(0, Math.ceil(activeCartItems.length / 2)).map((i) => i.id) },
-    { id: 'g-2', name: 'Comensal 2 (Laura)', itemIds: activeCartItems.slice(Math.ceil(activeCartItems.length / 2)).map((i) => i.id) },
-  ]);
-
-  const [newGuestName, setNewGuestName] = useState('');
 
   const handleAddGuest = () => {
     if (!newGuestName.trim()) return;

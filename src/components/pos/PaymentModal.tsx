@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRestaurant } from '../../context/RestaurantContext';
 import { PaymentMethod, PaymentEntry } from '../../types/restaurant';
 import confetti from 'canvas-confetti';
@@ -32,18 +32,23 @@ export const PaymentModal: React.FC = () => {
     setCurrentScreen,
   } = useRestaurant();
 
-  if (!showPaymentModal) return null;
-
   const subtotal = activeCartItems.reduce((acc, item) => acc + item.subtotal, 0);
   const tax = +(subtotal * 0.1).toFixed(2);
   const orderTotal = activeOrder ? activeOrder.total : +(subtotal + tax).toFixed(2);
 
-  const [tenders, setTenders] = useState<PaymentEntry[]>([
-    { method: 'efectivo', amount: orderTotal },
-  ]);
-
+  const [tenders, setTenders] = useState<PaymentEntry[]>([]);
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
   const [changeAmount, setChangeAmount] = useState<number>(0);
+
+  useEffect(() => {
+    if (showPaymentModal) {
+      setTenders([{ method: 'efectivo', amount: orderTotal }]);
+      setIsSuccess(false);
+      setChangeAmount(0);
+    }
+  }, [showPaymentModal, orderTotal]);
+
+  if (!showPaymentModal) return null;
 
   const totalTendered = tenders.reduce((acc, t) => acc + t.amount, 0);
   const remainingBalance = Math.max(0, +(orderTotal - totalTendered).toFixed(2));

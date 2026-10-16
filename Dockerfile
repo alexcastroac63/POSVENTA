@@ -1,49 +1,31 @@
-# Multi-stage Build for High-Performance Production Container
-# Stage 1: Build React Native Web App
+# Multi-stage Build para Producción (Alta eficiencia y bajo peso)
+# Etapa 1: Compilación de la aplicación React / Vite
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Install dependencies with cached layers
-COPY package.json package-lock.json* ./
-RUN npm ci
+# Copiar manifiestos e instalar dependencias
+COPY package.json package-lock.json* bun.lock* ./
+RUN npm install
 
-# Copy full source and compile
+# Copiar el código fuente y compilar
 COPY . .
 RUN npm run build
 
-# Stage 2: Production Nginx Server
+# Etapa 2: Servidor Nginx ligero para producción
 FROM nginx:alpine-slim AS runner
 WORKDIR /usr/share/nginx/html
 
-# Clean default static assets
+# Limpiar archivos estáticos por defecto
 RUN rm -rf ./*
 
-# Copy compiled artifacts from builder stage
+# Copiar archivos compilados desde la etapa de compilación
 COPY --from=builder /app/dist .
 
-# Production custom Nginx reverse proxy configuration
-COPY <<EOF /etc/nginx/conf.d/default.conf
-server {
-    listen 3000;
-    server_name localhost;
+# Copiar configuración de Nginx (soporta puertos 80 y 3000)
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-    location / {
-        root /usr/share/nginx/html;
-        index index.html;
-        try_files \$uri \$uri/ /index.html;
-        add_header Cache-Control "no-cache, must-revalidate";
-    }
-
-    location /api/ {
-        proxy_pass http://restoxyz-backend:5000/;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host \$host;
-        proxy_cache_bypass \$http_upgrade;
-    }
-}
-EOF
-
+# Exponer puertos estándar
+EXPOSE 80
 EXPOSE 3000
+
 CMD ["nginx", "-g", "daemon off;"]

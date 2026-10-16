@@ -22,15 +22,12 @@ export const ModifierModal: React.FC = () => {
     getEffectivePrice,
   } = useRestaurant();
 
-  if (!modifierModalItem) return null;
-
-  const basePrice = getEffectivePrice(modifierModalItem, selectedChannel);
-
   const [selections, setSelections] = useState<Record<string, ModifierOption>>({});
   const [activeExpandedGroupId, setActiveExpandedGroupId] = useState<string | null>(null);
   const [specialNotes, setSpecialNotes] = useState<string>('');
 
   useEffect(() => {
+    if (!modifierModalItem) return;
     if (modifierModalItem.modifierGroups) {
       const initial: Record<string, ModifierOption> = {};
       modifierModalItem.modifierGroups.forEach((grp) => {
@@ -45,6 +42,10 @@ export const ModifierModal: React.FC = () => {
       }
     }
   }, [modifierModalItem]);
+
+  if (!modifierModalItem) return null;
+
+  const basePrice = getEffectivePrice(modifierModalItem, selectedChannel);
 
   const modifiersDelta = Object.values(selections).reduce(
     (acc, opt) => acc + (opt.priceDelta || 0),

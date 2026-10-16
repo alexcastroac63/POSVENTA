@@ -107,53 +107,31 @@ networks:
   restaurant-net:
     driver: bridge`;
 
-  const dockerfileSnippet = `# Multi-stage Build for High-Performance Production Container
-# Stage 1: Build React Native Web App
+  const dockerfileSnippet = `# PASO 1: Construir la imagen localmente antes de ejecutar:
+# docker build -t posventa-app .
+#
+# PASO 2: Levantar el contenedor:
+# docker run -d -p 9090:80 --name mi-posventa posventa-app
+# (Acceder en http://localhost:9090)
+
+# Multi-stage Build para Producción
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Install dependencies with cached layers
-COPY package.json package-lock.json* ./
-RUN npm ci
+COPY package.json package-lock.json* bun.lock* ./
+RUN npm install
 
-# Copy full source and compile
 COPY . .
 RUN npm run build
 
-# Stage 2: Production Nginx / Lightweight Web Server
 FROM nginx:alpine-slim AS runner
 WORKDIR /usr/share/nginx/html
 
-# Clean default static assets
 RUN rm -rf ./*
-
-# Copy compiled artifacts from builder stage
 COPY --from=builder /app/dist .
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Production custom Nginx reverse proxy configuration
-COPY <<EOF /etc/nginx/conf.d/default.conf
-server {
-    listen 3000;
-    server_name localhost;
-
-    location / {
-        root /usr/share/nginx/html;
-        index index.html;
-        try_files \\$uri \\$uri/ /index.html;
-        add_header Cache-Control "no-cache, must-revalidate";
-    }
-
-    location /api/ {
-        proxy_pass http://restoxyz-backend:5000/;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade \\$http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host \\$host;
-        proxy_cache_bypass \\$http_upgrade;
-    }
-}
-EOF
-
+EXPOSE 80
 EXPOSE 3000
 CMD ["nginx", "-g", "daemon off;"]`;
 
