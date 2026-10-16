@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  # 1. Frontend Web App (React Native Web + Vite SPA)
+  restoxyz-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: restoxyz-pos-ui
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - VITE_API_URL=http://localhost:5000/api
+      - VITE_S3_STORAGE_URL=http://localhost:9000/restaurant-media
+    depends_on:
+      - restoxyz-backend
+      - minio-s3
+    networks:
+      - restaurant-net
+
+  # 2. Backend Real-time API (C# .NET 8 / Node.js Express)
+  restoxyz-backend:
+    build:
+      context: ./backend-csharp
+      dockerfile: Dockerfile
+    container_name: restoxyz-api
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Host=postgres-db;Port=5432;Database=restoxyz_db;Username=resto_admin;Password=secret_pwd
+      - Redis__ConnectionString=redis-pubsub:6379
+      - AWS__ServiceURL=http://minio-s3:9000
+      - AWS__AccessKey=minio_resto_admin
+      - AWS__SecretKey=minio_resto_secret_2026
+    depends_on:
+      - redis-pubsub
+      - minio-s3
+    networks:
+      - restaurant-net
+
+  # 3. Docker tipo S3 para almacenamiento de imágenes (MinIO S3-Compatible)
+  minio-s3:
+    image: minio/minio:latest
+    container_name: restoxyz-s3-storage
+    restart: always
+    ports:
+      - "9000:9000" # S3 API endpoint
+      - "9001:9001" # Web Console UI
+    environment:
+      - MINIO_ROOT_USER=minio_resto_admin
+      - MINIO_ROOT_PASSWORD=minio_resto_secret_2026
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - restaurant-net
+
+  # 4. Redis for Real-time Synchronized Pub/Sub (Tablets <-> KDS <-> All-in-One)
+  redis-pubsub:
+    image: redis:7-alpine
+    container_name: restoxyz-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - restaurant-net
+
+volumes:
+  minio_data:
+    driver: local
+
+networks:
+  restaurant-net:
+    driver: bridge

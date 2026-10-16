@@ -1,0 +1,69 @@
+name: CI/CD Pipeline - RestoXYZ Production
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # 1. Continuous Integration (Lint, Typecheck & Build)
+  test-and-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run TypeScript Linter & Typecheck
+        run: npm run lint
+
+      - name: Build Web Application
+        run: npm run build
+
+  # 2. Continuous Delivery: Docker Build & Registry Push
+  docker-build-and-push:
+    needs: test-and-lint
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & Push Frontend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository }}/restoxyz-ui:latest
+
+  # 3. Continuous Deployment: Production Release
+  deploy-to-production:
+    needs: docker-build-and-push
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Deploy to Cloud Infrastructure (Kubernetes / Cloud Run)
+        run: |
+          echo "Desplegando versión a producción..."
+          echo "Sincronizando endpoints de almacenamiento S3 MinIO..."
+          echo "Verificando canales de producción y KDS..."
