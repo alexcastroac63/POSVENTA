@@ -3,12 +3,16 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Copiar manifiestos e instalar dependencias
-COPY package.json package-lock.json* bun.lock* ./
-RUN npm install
+# Copiar únicamente package.json para evitar conflictos de lockfiles (edgesOut)
+COPY package.json ./
 
-# Copiar el código fuente y compilar
+# Instalar dependencias limpias con flags de compatibilidad
+RUN npm install --legacy-peer-deps --no-audit
+
+# Copiar el código fuente
 COPY . .
+
+# Compilar la aplicación para producción
 RUN npm run build
 
 # Etapa 2: Servidor Nginx ligero para producción

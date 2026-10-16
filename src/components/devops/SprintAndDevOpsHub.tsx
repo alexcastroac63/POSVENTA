@@ -118,8 +118,9 @@ networks:
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-COPY package.json package-lock.json* bun.lock* ./
-RUN npm install
+# Copiar únicamente package.json para evitar conflicto de lockfiles (edgesOut)
+COPY package.json ./
+RUN npm install --legacy-peer-deps --no-audit
 
 COPY . .
 RUN npm run build
