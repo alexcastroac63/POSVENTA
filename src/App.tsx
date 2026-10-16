@@ -14,6 +14,7 @@ import { KitchenDisplayScreen } from './components/kds/KitchenDisplayScreen';
 import { CashierManagementScreen } from './components/cashier/CashierManagementScreen';
 import { ReportsAuditScreen } from './components/reports/ReportsAuditScreen';
 import { SprintAndDevOpsHub } from './components/devops/SprintAndDevOpsHub';
+import { AdminConfigLayout } from './components/admin/AdminConfigLayout';
 import { PreBillModal } from './components/pos/PreBillModal';
 import { SplitBillModal } from './components/pos/SplitBillModal';
 import { PaymentModal } from './components/pos/PaymentModal';
@@ -27,6 +28,8 @@ const MainContent: React.FC = () => {
     switch (currentScreen) {
       case 'login':
         return <LoginScreen />;
+      case 'admin_config':
+        return <AdminConfigLayout />;
       case 'channel_select':
         return <ChannelSelectScreen />;
       case 'table_map':
@@ -50,6 +53,20 @@ const MainContent: React.FC = () => {
     return (
       <main className="min-h-screen bg-slate-100 flex flex-col font-sans">
         {renderScreen()}
+        {toastMessage && (
+          <div className="fixed bottom-4 right-4 z-50 bg-white border-2 border-emerald-600 text-slate-900 px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2 text-xs font-bold animate-bounce">
+            <CheckCircle className="w-4 h-4 text-emerald-600" />
+            <span>{toastMessage}</span>
+          </div>
+        )}
+      </main>
+    );
+  }
+
+  if (currentScreen === 'admin_config') {
+    return (
+      <main className="min-h-screen bg-slate-100 flex flex-col font-sans">
+        <AdminConfigLayout />
         {toastMessage && (
           <div className="fixed bottom-4 right-4 z-50 bg-white border-2 border-emerald-600 text-slate-900 px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2 text-xs font-bold animate-bounce">
             <CheckCircle className="w-4 h-4 text-emerald-600" />

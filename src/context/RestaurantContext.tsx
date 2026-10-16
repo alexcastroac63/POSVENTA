@@ -18,6 +18,11 @@ import {
   AuditLog,
   SplitSubBill,
   SprintUserStory,
+  ProductItem,
+  SalesChannelConfig,
+  RoleProfile,
+  RolePermissions,
+  DiscountPolicy,
 } from '../types/restaurant';
 import {
   INITIAL_USERS,
@@ -27,10 +32,15 @@ import {
   INITIAL_CASH_SHIFT,
   INITIAL_AUDIT_LOGS,
   INITIAL_SPRINT_STORIES,
+  INITIAL_PRODUCTS,
+  INITIAL_CHANNELS,
+  INITIAL_PROFILES,
+  INITIAL_DISCOUNTS,
 } from '../data/initialData';
 
 export type ActiveScreen =
   | 'login'
+  | 'admin_config'
   | 'channel_select'
   | 'table_map'
   | 'pos_order'
@@ -67,10 +77,13 @@ interface RestaurantContextType {
   // Catalog & Cart
   menuItems: MenuItem[];
   activeCartItems: OrderItem[];
+  setActiveCartItems: React.Dispatch<React.SetStateAction<OrderItem[]>>;
   cartNotes: string;
   setCartNotes: (notes: string) => void;
   discountPercentage: number;
+  setDiscountPercentage: (discount: number) => void;
   discountAuthorizedBy: string | null;
+  setDiscountAuthorizedBy: (supervisor: string | null) => void;
 
   // Modals & Subflows
   modifierModalItem: MenuItem | null;
@@ -117,6 +130,38 @@ interface RestaurantContextType {
   getEffectivePrice: (item: MenuItem, channel: SalesChannel) => number;
   toastMessage: string | null;
   showToast: (msg: string) => void;
+
+  // Backoffice Master Configuration
+  products: ProductItem[];
+  setProducts: React.Dispatch<React.SetStateAction<ProductItem[]>>;
+  saveProduct: (product: ProductItem) => void;
+  deleteProduct: (productId: string) => void;
+
+  setMenuItems: React.Dispatch<React.SetStateAction<MenuItem[]>>;
+  saveMenuItem: (item: MenuItem) => void;
+  deleteMenuItem: (itemId: string) => void;
+
+  salesChannels: SalesChannelConfig[];
+  setSalesChannels: React.Dispatch<React.SetStateAction<SalesChannelConfig[]>>;
+  saveSalesChannel: (channel: SalesChannelConfig) => void;
+  toggleChannelActive: (channelId: string) => void;
+
+  users: User[];
+  setUsers: React.Dispatch<React.SetStateAction<User[]>>;
+  saveUser: (user: User) => void;
+  deleteUser: (userId: string) => void;
+
+  profiles: RoleProfile[];
+  setProfiles: React.Dispatch<React.SetStateAction<RoleProfile[]>>;
+  saveProfile: (profile: RoleProfile) => void;
+  toggleProfilePermission: (profileId: string, permKey: keyof RolePermissions) => void;
+
+  discountPolicies: DiscountPolicy[];
+  setDiscountPolicies: React.Dispatch<React.SetStateAction<DiscountPolicy[]>>;
+  saveDiscountPolicy: (policy: DiscountPolicy) => void;
+  deleteDiscountPolicy: (policyId: string) => void;
+
+  hasPermission: (permissionKey: keyof RolePermissions) => boolean;
 }
 
 const RestaurantContext = createContext<RestaurantContextType | undefined>(undefined);
@@ -133,7 +178,14 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [tables, setTables] = useState<Table[]>(INITIAL_TABLES);
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
 
-  const [menuItems] = useState<MenuItem[]>(INITIAL_MENU_ITEMS);
+  // Backoffice States
+  const [products, setProducts] = useState<ProductItem[]>(INITIAL_PRODUCTS);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>(INITIAL_MENU_ITEMS);
+  const [salesChannels, setSalesChannels] = useState<SalesChannelConfig[]>(INITIAL_CHANNELS);
+  const [users, setUsers] = useState<User[]>(INITIAL_USERS);
+  const [profiles, setProfiles] = useState<RoleProfile[]>(INITIAL_PROFILES);
+  const [discountPolicies, setDiscountPolicies] = useState<DiscountPolicy[]>(INITIAL_DISCOUNTS);
+
   const [activeCartItems, setActiveCartItems] = useState<OrderItem[]>([]);
   const [cartNotes, setCartNotes] = useState<string>('');
   const [discountPercentage, setDiscountPercentage] = useState<number>(0);
@@ -160,16 +212,40 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }, 3200);
   };
 
-  // Helper to determine price based on channel
+  // Helper to determine price based on channel configuration (base, delta, custom)
   const getEffectivePrice = (item: MenuItem, channel: SalesChannel): number => {
+    // 1. Detailed channelPricing configuration
+    if (item.channelPricing && item.channelPricing[channel]) {
+      const setting = item.channelPricing[channel];
+      if (setting.mode === 'custom' && typeof setting.customPrice === 'number' && setting.customPrice > 0) {
+        return setting.customPrice;
+      }
+      if (setting.mode === 'delta' && typeof setting.delta === 'number') {
+        return Math.max(0, +(item.basePrice + setting.delta).toFixed(2));
+      }
+      if (setting.mode === 'base') {
+        return item.basePrice;
+      }
+    }
+
+    // 2. Fallback to channelPrices dictionary
     if (item.channelPrices && item.channelPrices[channel] !== undefined) {
       return item.channelPrices[channel];
     }
+
+    // 3. Fallback to channel defaults
+    const channelConfig = salesChannels.find((c) => c.id === channel);
+    if (channelConfig) {
+      if (channelConfig.defaultPriceMode === 'delta') {
+        return Math.max(0, +(item.basePrice + channelConfig.defaultDelta).toFixed(2));
+      }
+    }
+
     if (channel === 'delivery') {
-      return +(item.basePrice * 1.18).toFixed(2); // standard 18% markup
+      return +(item.basePrice * 1.18).toFixed(2);
     }
     if (channel === 'llevar') {
-      return +(item.basePrice * 0.95).toFixed(2); // 5% takeaway discount
+      return +(item.basePrice * 0.95).toFixed(2);
     }
     return item.basePrice;
   };
@@ -240,7 +316,9 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     // If table already has an active order, load its items
     const existingOrder = orders.find(
-      (o) => o.tableId === table.id && ['abierta', 'en_cocina', 'en_precuenta'].includes(o.status)
+      (o) =>
+        (o.tableId === table.id || (table.currentOrderId && o.id === table.currentOrderId)) &&
+        ['abierta', 'en_cocina', 'lista_para_servir', 'en_precuenta'].includes(o.status)
     );
 
     if (existingOrder) {
@@ -282,6 +360,10 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       status: 'en_cola',
       subtotal: finalUnitPrice,
       assignedGuestName: guestName || (selectedTable ? `Comensal 1` : undefined),
+      allowDiscounts: item.allowDiscounts !== false,
+      internalProductsSummary: item.internalProducts?.map(
+        (p) => `${p.order}. ${p.productName}`
+      ),
     };
 
     setActiveCartItems((prev) => [...prev, newItem]);
@@ -323,7 +405,11 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
 
     const subtotal = activeCartItems.reduce((acc, item) => acc + item.subtotal, 0);
-    const discAmount = +(subtotal * (discountPercentage / 100)).toFixed(2);
+    // Solo aplica descuento a ítems habilitados para descuento
+    const discountableSubtotal = activeCartItems
+      .filter((item) => item.allowDiscounts !== false)
+      .reduce((acc, item) => acc + item.subtotal, 0);
+    const discAmount = +(discountableSubtotal * (discountPercentage / 100)).toFixed(2);
     const taxable = subtotal - discAmount;
     const taxAmount = +(taxable * 0.10).toFixed(2); // 10% IVA
     const total = +(taxable + taxAmount).toFixed(2);
@@ -569,14 +655,229 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const target = tables.find((t) => t.id === targetId);
     if (!source || !target) return;
 
+    // 1. Locate active orders for both tables
+    const sourceOrder = orders.find(
+      (o) =>
+        (o.tableId === sourceId || (source.currentOrderId && o.id === source.currentOrderId)) &&
+        ['abierta', 'en_cocina', 'lista_para_servir', 'en_precuenta'].includes(o.status)
+    );
+
+    const targetOrder = orders.find(
+      (o) =>
+        (o.tableId === targetId || (target.currentOrderId && o.id === target.currentOrderId)) &&
+        ['abierta', 'en_cocina', 'lista_para_servir', 'en_precuenta'].includes(o.status)
+    );
+
+    let updatedOrders = [...orders];
+    let consolidatedOrderId = targetOrder?.id || sourceOrder?.id;
+    let finalTotal = +(
+      (target.totalAmount || targetOrder?.total || 0) +
+      (source.totalAmount || sourceOrder?.total || 0)
+    ).toFixed(2);
+
+    if (sourceOrder && targetOrder) {
+      // Consolidate both orders' internal menus (items)
+      const mergedSourceItems: OrderItem[] = sourceOrder.items.map((it, idx) => ({
+        ...it,
+        id: `${it.id}-from-m${source.number}-${Date.now()}-${idx}`,
+        assignedGuestName: it.assignedGuestName
+          ? `${it.assignedGuestName} (Mesa ${source.number})`
+          : `Comensal Mesa ${source.number}`,
+      }));
+
+      const combinedItems = [...targetOrder.items, ...mergedSourceItems];
+      const combinedSubtotal = +combinedItems
+        .reduce((acc, it) => acc + (it.subtotal || it.unitPrice * it.quantity), 0)
+        .toFixed(2);
+
+      const combinedDiscountAmount = +(
+        (targetOrder.discountAmount || 0) + (sourceOrder.discountAmount || 0)
+      ).toFixed(2);
+
+      const taxable = Math.max(0, +(combinedSubtotal - combinedDiscountAmount).toFixed(2));
+      const combinedTax = +(taxable * 0.10).toFixed(2);
+      const combinedTotal = +(taxable + combinedTax).toFixed(2);
+
+      const mergedNotes = [
+        targetOrder.notes,
+        sourceOrder.notes ? `[De Mesa ${source.number}]: ${sourceOrder.notes}` : '',
+      ]
+        .filter(Boolean)
+        .join(' | ');
+
+      const consolidatedTargetOrder: Order = {
+        ...targetOrder,
+        items: combinedItems,
+        subtotal: combinedSubtotal,
+        discountAmount: combinedDiscountAmount,
+        taxAmount: combinedTax,
+        total: combinedTotal,
+        notes: mergedNotes,
+        status:
+          targetOrder.status === 'en_precuenta' || sourceOrder.status === 'en_precuenta'
+            ? 'en_precuenta'
+            : 'en_cocina',
+      };
+
+      finalTotal = combinedTotal;
+      consolidatedOrderId = targetOrder.id;
+
+      updatedOrders = updatedOrders.map((o) => {
+        if (o.id === targetOrder.id) return consolidatedTargetOrder;
+        if (o.id === sourceOrder.id) {
+          return {
+            ...o,
+            status: 'cobrada' as const,
+            notes: `${o.notes ? o.notes + ' | ' : ''}Unida a Mesa ${target.number} (Orden #${targetOrder.orderNumber})`,
+          };
+        }
+        return o;
+      });
+    } else if (sourceOrder && !targetOrder) {
+      // Transfer source order to target table
+      const transferredOrder: Order = {
+        ...sourceOrder,
+        tableId: target.id,
+        tableNumber: target.number,
+        salonName: target.salonName,
+      };
+      consolidatedOrderId = transferredOrder.id;
+      finalTotal = transferredOrder.total;
+
+      updatedOrders = updatedOrders.map((o) => (o.id === sourceOrder.id ? transferredOrder : o));
+    } else if (!sourceOrder && targetOrder) {
+      // Target order has items, source table only had total amount
+      if ((source.totalAmount || 0) > 0) {
+        const sourceItemAmount = +((source.totalAmount || 0) / 1.10).toFixed(2);
+        const sourceTax = +((source.totalAmount || 0) - sourceItemAmount).toFixed(2);
+        const synthesizedItem: OrderItem = {
+          id: `item-from-m${source.number}-${Date.now()}`,
+          menuItemId: 'prod-01',
+          name: `Consumo consolidado Mesa ${source.number}`,
+          sku: `CONS-M${source.number}`,
+          basePrice: sourceItemAmount,
+          unitPrice: sourceItemAmount,
+          quantity: 1,
+          selectedModifiers: [],
+          station: 'pase' as const,
+          status: 'entregado' as const,
+          subtotal: sourceItemAmount,
+          assignedGuestName: `Mesa ${source.number}`,
+        };
+        const combinedItems = [...targetOrder.items, synthesizedItem];
+        const newSubtotal = +(targetOrder.subtotal + sourceItemAmount).toFixed(2);
+        const newTax = +(targetOrder.taxAmount + sourceTax).toFixed(2);
+        const newTotal = +(targetOrder.total + (source.totalAmount || 0)).toFixed(2);
+
+        const updatedTargetOrder: Order = {
+          ...targetOrder,
+          items: combinedItems,
+          subtotal: newSubtotal,
+          taxAmount: newTax,
+          total: newTotal,
+        };
+        consolidatedOrderId = targetOrder.id;
+        finalTotal = newTotal;
+        updatedOrders = updatedOrders.map((o) => (o.id === targetOrder.id ? updatedTargetOrder : o));
+      } else {
+        consolidatedOrderId = targetOrder.id;
+        finalTotal = targetOrder.total;
+      }
+    } else {
+      // Neither had an explicit order, synthesize a consolidated order if there is total
+      if (finalTotal > 0) {
+        const orderNum = 100 + orders.length + 1;
+        const subtotalCalc = +(finalTotal / 1.10).toFixed(2);
+        const taxCalc = +(finalTotal - subtotalCalc).toFixed(2);
+        const synthesizedItems: OrderItem[] = [
+          {
+            id: `item-joined-src-${Date.now()}`,
+            menuItemId: 'prod-01',
+            name: `Consumo Mesa ${source.number}`,
+            sku: `CONS-M${source.number}`,
+            basePrice: +((source.totalAmount || 0) / 1.10).toFixed(2),
+            unitPrice: +((source.totalAmount || 0) / 1.10).toFixed(2),
+            quantity: 1,
+            selectedModifiers: [],
+            station: 'pase' as const,
+            status: 'entregado' as const,
+            subtotal: +((source.totalAmount || 0) / 1.10).toFixed(2),
+            assignedGuestName: `Mesa ${source.number}`,
+          },
+          {
+            id: `item-joined-tgt-${Date.now()}`,
+            menuItemId: 'prod-02',
+            name: `Consumo Mesa ${target.number}`,
+            sku: `CONS-M${target.number}`,
+            basePrice: +((target.totalAmount || 0) / 1.10).toFixed(2),
+            unitPrice: +((target.totalAmount || 0) / 1.10).toFixed(2),
+            quantity: 1,
+            selectedModifiers: [],
+            station: 'pase' as const,
+            status: 'entregado' as const,
+            subtotal: +((target.totalAmount || 0) / 1.10).toFixed(2),
+            assignedGuestName: `Mesa ${target.number}`,
+          },
+        ].filter((it) => it.subtotal > 0);
+
+        const newConsolidatedOrder: Order = {
+          id: `ord-joined-${Date.now()}`,
+          orderNumber: orderNum,
+          channel: 'mesa',
+          tableId: target.id,
+          tableNumber: target.number,
+          salonName: target.salonName,
+          status: 'en_cocina',
+          items: synthesizedItems,
+          waiterId: currentUser.id,
+          waiterName: target.waiterName || source.waiterName || currentUser.name,
+          createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          subtotal: subtotalCalc,
+          discountPercentage: 0,
+          discountAmount: 0,
+          taxAmount: taxCalc,
+          total: finalTotal,
+        };
+        consolidatedOrderId = newConsolidatedOrder.id;
+        updatedOrders = [newConsolidatedOrder, ...updatedOrders];
+      }
+    }
+
+    setOrders(updatedOrders);
+
+    // If currently open table in cart is either source or target, update cart
+    if (selectedTable?.id === source.id || selectedTable?.id === target.id) {
+      const activeConsolidatedOrder = updatedOrders.find((o) => o.id === consolidatedOrderId);
+      if (activeConsolidatedOrder) {
+        setActiveCartItems([...activeConsolidatedOrder.items]);
+        setDiscountPercentage(activeConsolidatedOrder.discountPercentage || 0);
+        setDiscountAuthorizedBy(activeConsolidatedOrder.discountAuthorizedBy || null);
+        setCartNotes(activeConsolidatedOrder.notes || '');
+      }
+      setSelectedTable((prev) =>
+        prev?.id === source.id
+          ? { ...target, totalAmount: finalTotal, currentOrderId: consolidatedOrderId }
+          : prev
+      );
+    }
+
+    // Update tables state
     setTables((prev) =>
       prev.map((t) => {
         if (t.id === targetId) {
           return {
             ...t,
-            totalAmount: (t.totalAmount || 0) + (source.totalAmount || 0),
+            totalAmount: finalTotal,
             seats: t.seats + source.seats,
             status: 'ocupada',
+            currentOrderId: consolidatedOrderId,
+            waiterName: target.waiterName || source.waiterName || currentUser.name,
+            openedAt:
+              target.openedAt ||
+              source.openedAt ||
+              new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            guestsCount:
+              (target.guestsCount || 0) + (source.guestsCount || 0) || t.seats + source.seats,
           };
         }
         if (t.id === sourceId) {
@@ -585,6 +886,10 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             status: 'libre',
             totalAmount: undefined,
             currentOrderId: undefined,
+            waiterName: undefined,
+            openedAt: undefined,
+            guestsCount: undefined,
+            reservationInfo: undefined,
           };
         }
         return t;
@@ -593,9 +898,9 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     addAuditLog(
       'UNIR_MESAS',
-      `Mesa ${source.number} unida y consolidada en Mesa ${target.number}`
+      `Mesa ${source.number} unida y consolidada en Mesa ${target.number}. Menú interno transferido y total unificado ($${finalTotal.toFixed(2)})`
     );
-    showToast(`Mesa ${source.number} unida a Mesa ${target.number}`);
+    showToast(`Mesa ${source.number} unida exitosamente a Mesa ${target.number}`);
   };
 
   const reassignTableWaiter = (tableId: string, newWaiterName: string) => {
@@ -638,6 +943,138 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     showToast('Cierre de caja Z finalizado');
   };
 
+  // --- BACKOFFICE CRUD OPERATIONS ---
+  const saveProduct = (product: ProductItem) => {
+    setProducts((prev) => {
+      const idx = prev.findIndex((p) => p.id === product.id);
+      if (idx >= 0) {
+        const copy = [...prev];
+        copy[idx] = product;
+        return copy;
+      }
+      return [product, ...prev];
+    });
+    showToast(`Producto guardado: ${product.name}`);
+  };
+
+  const deleteProduct = (productId: string) => {
+    setProducts((prev) => prev.filter((p) => p.id !== productId));
+    showToast('Producto eliminado del catálogo');
+  };
+
+  const saveMenuItem = (item: MenuItem) => {
+    setMenuItems((prev) => {
+      const idx = prev.findIndex((m) => m.id === item.id);
+      if (idx >= 0) {
+        const copy = [...prev];
+        copy[idx] = item;
+        return copy;
+      }
+      return [item, ...prev];
+    });
+    showToast(`Menú configurado: ${item.name}`);
+  };
+
+  const deleteMenuItem = (itemId: string) => {
+    setMenuItems((prev) => prev.filter((m) => m.id !== itemId));
+    showToast('Menú eliminado del catálogo');
+  };
+
+  const saveSalesChannel = (channel: SalesChannelConfig) => {
+    setSalesChannels((prev) => {
+      const idx = prev.findIndex((c) => c.id === channel.id);
+      if (idx >= 0) {
+        const copy = [...prev];
+        copy[idx] = channel;
+        return copy;
+      }
+      return [...prev, channel];
+    });
+    showToast(`Canal de venta actualizado: ${channel.name}`);
+  };
+
+  const toggleChannelActive = (channelId: string) => {
+    setSalesChannels((prev) =>
+      prev.map((c) => (c.id === channelId ? { ...c, isActive: !c.isActive } : c))
+    );
+    showToast('Estado del canal actualizado');
+  };
+
+  const saveUser = (user: User) => {
+    setUsers((prev) => {
+      const idx = prev.findIndex((u) => u.id === user.id);
+      if (idx >= 0) {
+        const copy = [...prev];
+        copy[idx] = user;
+        return copy;
+      }
+      return [...prev, user];
+    });
+    showToast(`Usuario guardado: ${user.name}`);
+  };
+
+  const deleteUser = (userId: string) => {
+    setUsers((prev) => prev.filter((u) => u.id !== userId));
+    showToast('Usuario eliminado');
+  };
+
+  const saveProfile = (profile: RoleProfile) => {
+    setProfiles((prev) => {
+      const idx = prev.findIndex((p) => p.id === profile.id);
+      if (idx >= 0) {
+        const copy = [...prev];
+        copy[idx] = profile;
+        return copy;
+      }
+      return [...prev, profile];
+    });
+    showToast(`Perfil actualizado: ${profile.name}`);
+  };
+
+  const toggleProfilePermission = (profileId: string, permKey: keyof RolePermissions) => {
+    setProfiles((prev) =>
+      prev.map((p) => {
+        if (p.id === profileId) {
+          return {
+            ...p,
+            permissions: {
+              ...p.permissions,
+              [permKey]: !p.permissions[permKey],
+            },
+          };
+        }
+        return p;
+      })
+    );
+    showToast('Permiso de perfil actualizado');
+  };
+
+  const saveDiscountPolicy = (policy: DiscountPolicy) => {
+    setDiscountPolicies((prev) => {
+      const idx = prev.findIndex((d) => d.id === policy.id);
+      if (idx >= 0) {
+        const copy = [...prev];
+        copy[idx] = policy;
+        return copy;
+      }
+      return [policy, ...prev];
+    });
+    showToast(`Regla de descuento guardada: ${policy.name}`);
+  };
+
+  const deleteDiscountPolicy = (policyId: string) => {
+    setDiscountPolicies((prev) => prev.filter((d) => d.id !== policyId));
+    showToast('Regla de descuento eliminada');
+  };
+
+  const hasPermission = (permissionKey: keyof RolePermissions): boolean => {
+    const profile = profiles.find(
+      (p) => p.roleKey === currentUser.role || p.id.includes(currentUser.role)
+    );
+    if (!profile) return true;
+    return !!profile.permissions[permissionKey];
+  };
+
   return (
     <RestaurantContext.Provider
       value={{
@@ -660,11 +1097,15 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         selectedTable,
         setSelectedTable,
         menuItems,
+        setMenuItems,
         activeCartItems,
+        setActiveCartItems,
         cartNotes,
         setCartNotes,
         discountPercentage,
+        setDiscountPercentage,
         discountAuthorizedBy,
+        setDiscountAuthorizedBy,
         modifierModalItem,
         setModifierModalItem,
         showSplitModal,
@@ -703,6 +1144,30 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         getEffectivePrice,
         toastMessage,
         showToast,
+        // Backoffice master configuration
+        products,
+        setProducts,
+        saveProduct,
+        deleteProduct,
+        saveMenuItem,
+        deleteMenuItem,
+        salesChannels,
+        setSalesChannels,
+        saveSalesChannel,
+        toggleChannelActive,
+        users,
+        setUsers,
+        saveUser,
+        deleteUser,
+        profiles,
+        setProfiles,
+        saveProfile,
+        toggleProfilePermission,
+        discountPolicies,
+        setDiscountPolicies,
+        saveDiscountPolicy,
+        deleteDiscountPolicy,
+        hasPermission,
       }}
     >
       {children}

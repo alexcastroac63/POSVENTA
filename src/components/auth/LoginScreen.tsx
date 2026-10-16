@@ -6,10 +6,10 @@
 import React, { useState } from 'react';
 import { useRestaurant } from '../../context/RestaurantContext';
 import { INITIAL_USERS } from '../../data/initialData';
-import { ShoppingCart, Lock, User as UserIcon, Store, MonitorCheck, ShieldCheck } from 'lucide-react';
+import { ShoppingCart, Lock, User as UserIcon, Store, MonitorCheck, ShieldCheck, ArrowRight } from 'lucide-react';
 
 export const LoginScreen: React.FC = () => {
-  const { login, branch } = useRestaurant();
+  const { login, branch, setCurrentScreen, showToast } = useRestaurant();
   const [username, setUsername] = useState('sofia');
   const [password, setPassword] = useState('••••••••');
   const [errorMsg, setErrorMsg] = useState('');
@@ -104,40 +104,80 @@ export const LoginScreen: React.FC = () => {
             </button>
           </form>
 
-          {/* Quick Persona Access */}
-          <div className="w-full mt-6 pt-5 border-t border-slate-100">
-            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2.5 text-center">
-              Acceso Rápido por Ficha de Personal:
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              {INITIAL_USERS.map((user) => (
-                <button
-                  key={user.id}
-                  onClick={() => login(user)}
-                  className="flex items-center gap-2 p-2 bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-400 rounded-xl text-left transition cursor-pointer group"
-                >
-                  <img
-                    src={user.avatar}
-                    alt={user.name}
-                    className="w-8 h-8 rounded-full object-cover border border-slate-300 group-hover:border-emerald-500"
-                  />
-                  <div className="overflow-hidden">
-                    <div className="text-xs font-bold text-slate-800 truncate">{user.name.split(' ')[0]}</div>
-                    <div className="text-[10px] text-emerald-700 font-semibold capitalize">{user.role}</div>
+            {/* Alternate Site Access Card (Backoffice Outside POS) */}
+            <div className="w-full mt-6 pt-5 border-t border-slate-200">
+              <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-4 rounded-2xl shadow-md border border-slate-700">
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 bg-emerald-500/20 text-emerald-400 rounded-lg border border-emerald-500/30">
+                      <ShieldCheck className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-black uppercase tracking-wider text-white">
+                        Sitio Alterno de Configuración
+                      </h4>
+                      <p className="text-[10px] text-slate-400 font-medium">
+                        Administración central fuera del POS
+                      </p>
+                    </div>
                   </div>
+                  <span className="text-[9px] font-mono font-bold bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 px-1.5 py-0.5 rounded">
+                    BACKOFFICE
+                  </span>
+                </div>
+
+                <p className="text-[11px] text-slate-300 leading-relaxed mb-3">
+                  Configura el maestro de <strong>productos</strong> (cocina vs armado), <strong>canales de venta</strong>, <strong>usuarios</strong>, <strong>perfiles y accesos</strong>, <strong>menús omnicanal</strong> y <strong>descuentos</strong>.
+                </p>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCurrentScreen('admin_config');
+                    showToast('Ingresando al Portal de Configuración y Backoffice');
+                  }}
+                  className="w-full py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-sm cursor-pointer active:scale-98"
+                >
+                  <span>Acceder a Configuraciones Backoffice</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </button>
-              ))}
+              </div>
+            </div>
+
+            {/* Quick Persona Access */}
+            <div className="w-full mt-5 pt-4 border-t border-slate-100">
+              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2.5 text-center">
+                O Acceso Rápido al Terminal POS por Ficha:
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {INITIAL_USERS.map((user) => (
+                  <button
+                    key={user.id}
+                    onClick={() => login(user)}
+                    className="flex items-center gap-2 p-2 bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-400 rounded-xl text-left transition cursor-pointer group"
+                  >
+                    <img
+                      src={user.avatar}
+                      alt={user.name}
+                      className="w-8 h-8 rounded-full object-cover border border-slate-300 group-hover:border-emerald-500"
+                    />
+                    <div className="overflow-hidden">
+                      <div className="text-xs font-bold text-slate-800 truncate">{user.name.split(' ')[0]}</div>
+                      <div className="text-[10px] text-emerald-700 font-semibold capitalize">{user.role}</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Clean Bottom Footer */}
-      <footer className="px-6 py-3 bg-white border-t border-slate-200 flex flex-wrap items-center justify-between text-xs text-slate-600 gap-2">
-        <div className="flex items-center gap-2">
-          <Store className="w-4 h-4 text-emerald-600" />
-          <span>Sucursal Central #01</span>
-        </div>
+        {/* Clean Bottom Footer */}
+        <footer className="px-6 py-3 bg-white border-t border-slate-200 flex flex-wrap items-center justify-between text-xs text-slate-600 gap-2">
+          <div className="flex items-center gap-2">
+            <Store className="w-4 h-4 text-emerald-600" />
+            <span>Sucursal Central #01</span>
+          </div>
         <div className="flex items-center gap-2">
           <MonitorCheck className="w-4 h-4 text-sky-600" />
           <span>Terminal Touch POS</span>

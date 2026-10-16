@@ -48,11 +48,54 @@ export interface Table {
   };
 }
 
+export type ProductPreparationType = 'cocina_interna' | 'armado_menu';
+
+export interface ProductItem {
+  id: string;
+  sku: string;
+  name: string;
+  description: string;
+  category: string;
+  cost: number;
+  preparationType: ProductPreparationType; // 'cocina_interna': va a proceso de cocina interna (KDS); 'armado_menu': solo preparación de armado con el menú
+  station: 'parrilla' | 'barra' | 'freidora' | 'pase' | 'ensamblado';
+  isActive: boolean;
+}
+
+export interface ProductModifierSubstitute {
+  id: string;
+  name: string;
+  targetProductId?: string;
+  priceDelta: number; // 0 = sin costo, > 0 = con costo
+  isDefault?: boolean;
+}
+
+export interface MenuInternalProduct {
+  id: string;
+  order: number; // Orden de armado / jerarquía interna: 1, 2, 3...
+  productId: string;
+  productName: string;
+  isRequired: boolean;
+  defaultQuantity: number;
+  modifiers: ProductModifierSubstitute[]; // Modificadores de estos por otros productos con costo o sin costo
+}
+
+export type ChannelPriceMode = 'base' | 'delta' | 'custom';
+
+export interface ChannelPriceSetting {
+  channelId: string;
+  enabled: boolean;
+  mode: ChannelPriceMode;
+  delta: number; // Diferencia negativa o positiva por canal en base al precio base
+  customPrice: number; // Precio distinto fijado por canal
+}
+
 export interface ModifierOption {
   id: string;
   name: string;
   priceDelta: number; // e.g. 0.00, 0.10, 0.50
   isDefault?: boolean;
+  preparationType?: ProductPreparationType;
 }
 
 export interface ModifierGroup {
@@ -68,14 +111,18 @@ export interface MenuItem {
   id: string;
   sku: string;
   name: string;
-  category: 'principal' | 'hamburguesas' | 'cenas' | 'promos' | 'bebidas' | 'postres';
+  category: string; // Un menú debe estar en una categoría
   basePrice: number;
   // Channel prices or auto-multiplier
   channelPrices?: {
     mesa: number;
     llevar: number;
     delivery: number;
+    [key: string]: number;
   };
+  channelPricing?: Record<string, ChannelPriceSetting>;
+  allowDiscounts?: boolean; // Puede estar habilitado para aplicarse descuentos o no
+  internalProducts?: MenuInternalProduct[]; // Los productos internos tienen un orden y modificadores
   image: string;
   description: string;
   isAvailableOnMesa: boolean;
@@ -83,6 +130,52 @@ export interface MenuItem {
   isAvailableOnDelivery: boolean;
   station: 'parrilla' | 'barra' | 'freidora' | 'pase';
   modifierGroups?: ModifierGroup[];
+  isActive?: boolean;
+}
+
+export interface SalesChannelConfig {
+  id: string;
+  name: string;
+  code: string;
+  description: string;
+  isActive: boolean;
+  defaultPriceMode: ChannelPriceMode;
+  defaultDelta: number;
+  icon?: string;
+  color?: string;
+}
+
+export interface RolePermissions {
+  accessPos: boolean;
+  accessKds: boolean;
+  accessCashier: boolean;
+  accessReports: boolean;
+  accessConfig: boolean; // Acceso al sitio alterno de configuración
+  canApplyDiscounts: boolean;
+  canVoidItems: boolean;
+  canOpenCashDrawer: boolean;
+  canSplitBills: boolean;
+  canJoinTables: boolean;
+}
+
+export interface RoleProfile {
+  id: string;
+  name: string;
+  description: string;
+  roleKey: UserRole | string;
+  permissions: RolePermissions;
+  userCount?: number;
+}
+
+export interface DiscountPolicy {
+  id: string;
+  name: string;
+  type: 'percentage' | 'fixed';
+  value: number;
+  requiresAuthorization: boolean;
+  allowedRoles: string[];
+  isActive: boolean;
+  respectNonDiscountableMenus: boolean; // Si es true, respeta allowDiscounts del menú
 }
 
 export interface SelectedModifier {
@@ -107,6 +200,9 @@ export interface OrderItem {
   status: 'en_cola' | 'preparando' | 'listo' | 'entregado';
   subtotal: number;
   assignedGuestName?: string;
+  allowDiscounts?: boolean;
+  preparationType?: ProductPreparationType;
+  internalProductsSummary?: string[];
 }
 
 export interface Order {

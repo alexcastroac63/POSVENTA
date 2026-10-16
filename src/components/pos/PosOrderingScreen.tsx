@@ -49,8 +49,9 @@ export const PosOrderingScreen: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   const categories = [
-    { id: 'principal', label: 'PRINCIPAL' },
+    { id: 'todos', label: 'TODOS' },
     { id: 'hamburguesas', label: 'HAMBURGUESAS' },
+    { id: 'principal', label: 'PRINCIPAL' },
     { id: 'cenas', label: 'CENAS' },
     { id: 'promos', label: 'PROMOS' },
     { id: 'bebidas', label: 'BEBIDAS' },
@@ -58,9 +59,14 @@ export const PosOrderingScreen: React.FC = () => {
   ];
 
   const filteredProducts = menuItems.filter((item) => {
-    if (selectedChannel === 'mesa' && !item.isAvailableOnMesa) return false;
-    if (selectedChannel === 'llevar' && !item.isAvailableOnLlevar) return false;
-    if (selectedChannel === 'delivery' && !item.isAvailableOnDelivery) return false;
+    // Configuración omnicanal dinámica
+    if (item.channelPricing && item.channelPricing[selectedChannel]) {
+      if (item.channelPricing[selectedChannel].enabled === false) return false;
+    } else {
+      if (selectedChannel === 'mesa' && !item.isAvailableOnMesa) return false;
+      if (selectedChannel === 'llevar' && !item.isAvailableOnLlevar) return false;
+      if (selectedChannel === 'delivery' && !item.isAvailableOnDelivery) return false;
+    }
 
     if (activeCategory !== 'todos' && item.category !== activeCategory) return false;
 
@@ -80,7 +86,11 @@ export const PosOrderingScreen: React.FC = () => {
   };
 
   const subtotal = activeCartItems.reduce((acc, item) => acc + item.subtotal, 0);
-  const discountAmount = +(subtotal * (discountPercentage / 100)).toFixed(2);
+  // Regla de Descuentos configurada: solo aplica a ítems habilitados para descuentos
+  const discountableSubtotal = activeCartItems
+    .filter((item) => item.allowDiscounts !== false)
+    .reduce((acc, item) => acc + item.subtotal, 0);
+  const discountAmount = +(discountableSubtotal * (discountPercentage / 100)).toFixed(2);
   const taxable = subtotal - discountAmount;
   const taxAmount = +(taxable * 0.10).toFixed(2);
   const total = +(taxable + taxAmount).toFixed(2);
@@ -179,6 +189,11 @@ export const PosOrderingScreen: React.FC = () => {
                           <SlidersHorizontal className="w-2.5 h-2.5 text-emerald-600" /> Combos
                         </div>
                       )}
+                      {product.allowDiscounts === false && (
+                        <div className="absolute bottom-1.5 left-1.5 bg-rose-600/90 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-2xs">
+                          🛡️ Margen Protegido
+                        </div>
+                      )}
                     </div>
 
                     {/* Product Name */}
@@ -193,8 +208,15 @@ export const PosOrderingScreen: React.FC = () => {
 
                     {/* Price & Add Trigger */}
                     <div className="pt-2 border-t border-slate-100 flex items-center justify-between mt-auto">
-                      <div className="text-sm font-black text-emerald-700 font-mono">
-                        ${effectivePrice.toFixed(2)}
+                      <div>
+                        <div className="text-sm font-black text-emerald-700 font-mono">
+                          ${effectivePrice.toFixed(2)}
+                        </div>
+                        {effectivePrice !== product.basePrice && (
+                          <div className="text-[10px] text-slate-400 font-mono line-through">
+                            Base: ${product.basePrice.toFixed(2)}
+                          </div>
+                        )}
                       </div>
                       <span className="w-7 h-7 rounded-lg bg-emerald-50 group-hover:bg-emerald-600 text-emerald-700 group-hover:text-white flex items-center justify-center transition border border-emerald-200">
                         <Plus className="w-4 h-4" />

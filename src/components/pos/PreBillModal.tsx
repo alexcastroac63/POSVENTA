@@ -24,7 +24,10 @@ export const PreBillModal: React.FC = () => {
   if (!showPreBillModal) return null;
 
   const subtotal = activeCartItems.reduce((acc, item) => acc + item.subtotal, 0);
-  const discountAmount = +(subtotal * (discountPercentage / 100)).toFixed(2);
+  const discountableSubtotal = activeCartItems
+    .filter((item) => item.allowDiscounts !== false)
+    .reduce((acc, item) => acc + item.subtotal, 0);
+  const discountAmount = +(discountableSubtotal * (discountPercentage / 100)).toFixed(2);
   const taxable = subtotal - discountAmount;
   const taxAmount = +(taxable * 0.10).toFixed(2);
   const total = +(taxable + taxAmount).toFixed(2);
