@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { useRestaurant, ActiveScreen, DeviceMode } from '../../context/RestaurantContext';
+import { useRestaurant, ActiveScreen } from '../../context/RestaurantContext';
 import { INITIAL_USERS } from '../../data/initialData';
 import {
   UtensilsCrossed,
@@ -14,9 +14,6 @@ import {
   Receipt,
   BarChart3,
   GitBranch,
-  Smartphone,
-  Monitor,
-  Tv,
   LogOut,
   ChevronDown,
   Building2,
@@ -33,8 +30,6 @@ export const TopNavbar: React.FC = () => {
     terminalId,
     currentScreen,
     setCurrentScreen,
-    deviceMode,
-    setDeviceMode,
     logout,
     orders,
   } = useRestaurant();
@@ -90,57 +85,10 @@ export const TopNavbar: React.FC = () => {
           </div>
         </div>
 
-        {/* Device Viewport Mode Switcher */}
-        <div className="flex items-center gap-1 bg-slate-200/80 rounded-lg p-0.5 border border-slate-300">
-          <span className="text-[10px] uppercase font-bold text-slate-500 px-1 hidden lg:inline">Vista:</span>
-          <button
-            onClick={() => setDeviceMode('responsive')}
-            title="Vista Adaptable"
-            className={`px-2 py-0.5 rounded text-xs flex items-center gap-1 font-semibold transition ${
-              deviceMode === 'responsive'
-                ? 'bg-white text-emerald-800 shadow-2xs'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <Monitor className="w-3 h-3" />
-            <span className="hidden sm:inline">Fluida</span>
-          </button>
-          <button
-            onClick={() => setDeviceMode('tablet')}
-            title="Simular Tablet Sofia (Android 7-10')"
-            className={`px-2 py-0.5 rounded text-xs flex items-center gap-1 font-semibold transition ${
-              deviceMode === 'tablet'
-                ? 'bg-white text-emerald-800 shadow-2xs'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <Smartphone className="w-3 h-3" />
-            <span>Tablet (Sofia)</span>
-          </button>
-          <button
-            onClick={() => setDeviceMode('all_in_one')}
-            title="Terminal Táctil All-in-One (Cajero)"
-            className={`px-2 py-0.5 rounded text-xs flex items-center gap-1 font-semibold transition ${
-              deviceMode === 'all_in_one'
-                ? 'bg-white text-emerald-800 shadow-2xs'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <Monitor className="w-3 h-3" />
-            <span>All-in-One (Carlos)</span>
-          </button>
-          <button
-            onClick={() => setDeviceMode('kds_monitor')}
-            title="Monitor KDS Cocina (Rodrigo)"
-            className={`px-2 py-0.5 rounded text-xs flex items-center gap-1 font-semibold transition ${
-              deviceMode === 'kds_monitor'
-                ? 'bg-amber-500 text-white shadow-2xs'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <Tv className="w-3 h-3" />
-            <span>KDS (Rodrigo)</span>
-          </button>
+        {/* Status indicator */}
+        <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-800 px-2.5 py-1 rounded-lg text-xs font-semibold shadow-2xs">
+          <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
+          <span>Terminal Activo • En Línea</span>
         </div>
       </div>
 

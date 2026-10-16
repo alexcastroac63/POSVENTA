@@ -18,9 +18,6 @@ import {
   CreditCard,
   Percent,
   ArrowLeft,
-  ArrowRight,
-  RotateCw,
-  Home,
   SlidersHorizontal,
 } from 'lucide-react';
 
@@ -90,27 +87,15 @@ export const PosOrderingScreen: React.FC = () => {
 
   return (
     <div className="flex-1 bg-slate-100 flex flex-col p-2 sm:p-4 font-sans select-none overflow-hidden">
-      {/* Wireframe Browser Header Bar (Executive Light) */}
-      <div className="w-full bg-white border border-slate-300 rounded-xl mb-3 p-2.5 flex items-center justify-between gap-3 text-slate-700 shadow-2xs">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setCurrentScreen(selectedChannel === 'mesa' ? 'table_map' : 'channel_select')}
-            className="p-1 hover:text-slate-900 transition flex items-center gap-1 text-xs font-bold cursor-pointer"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span className="hidden sm:inline">Regresar</span>
-          </button>
-          <button className="p-1 hover:text-slate-900 transition"><ArrowRight className="w-4 h-4" /></button>
-          <button className="p-1 hover:text-slate-900 transition"><RotateCw className="w-4 h-4" /></button>
-          <button onClick={() => setCurrentScreen('channel_select')} className="p-1 hover:text-slate-900 transition">
-            <Home className="w-4 h-4" />
-          </button>
-        </div>
-
-        <div className="flex-1 max-w-sm bg-slate-50 border border-slate-300 rounded-md px-3 py-1 text-xs text-center text-slate-600 font-mono truncate shadow-2xs">
-          https://pos.restoxyz.internal/order?channel={selectedChannel}
-          {selectedTable ? `&table=${selectedTable.number}` : ''}
-        </div>
+      {/* Operational Top Action Bar */}
+      <div className="w-full bg-white border border-slate-200 rounded-xl mb-3 p-3 flex items-center justify-between gap-3 text-slate-700 shadow-2xs">
+        <button
+          onClick={() => setCurrentScreen(selectedChannel === 'mesa' ? 'table_map' : 'channel_select')}
+          className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg transition flex items-center gap-1.5 text-xs font-bold cursor-pointer"
+        >
+          <ArrowLeft className="w-4 h-4 text-slate-600" />
+          <span>{selectedChannel === 'mesa' ? 'Volver al Salón' : 'Volver a Canales'}</span>
+        </button>
 
         {/* Active context badge */}
         <div className="flex items-center gap-2 text-xs font-bold">
@@ -120,11 +105,11 @@ export const PosOrderingScreen: React.FC = () => {
             </span>
           ) : selectedChannel === 'delivery' ? (
             <span className="px-3 py-1 rounded-lg bg-amber-50 border border-amber-300 text-amber-800 shadow-2xs">
-              DELIVERY: {deliveryPlatform} (Tarifa +18%)
+              DELIVERY: {deliveryPlatform} (Tarifa Diferenciada +18%)
             </span>
           ) : (
             <span className="px-3 py-1 rounded-lg bg-sky-50 border border-sky-300 text-sky-800 shadow-2xs">
-              PARA LLEVAR (Mostrador)
+              VENTA EN MOSTRADOR (Para Llevar)
             </span>
           )}
         </div>

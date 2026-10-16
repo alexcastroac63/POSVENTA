@@ -28,9 +28,7 @@ export const SprintAndDevOpsHub: React.FC = () => {
     .filter((s) => s.status === 'done')
     .reduce((acc, s) => acc + s.storyPoints, 0);
 
-  const dockerComposeSnippet = `version: '3.8'
-
-services:
+  const dockerComposeSnippet = `services:
   # 1. Frontend Web App (React Native Web + Vite SPA)
   restoxyz-frontend:
     build:
@@ -72,9 +70,9 @@ services:
     networks:
       - restaurant-net
 
-  # 3. Docker tipo S3 para almacenamiento de imágenes (MinIO S3-Compatible)
+  # 3. Docker tipo S3 para almacenamiento de imágenes (MinIO S3-Compatible de Quay.io)
   minio-s3:
-    image: minio/minio:latest
+    image: quay.io/minio/minio:latest
     container_name: restoxyz-s3-storage
     restart: always
     ports:
