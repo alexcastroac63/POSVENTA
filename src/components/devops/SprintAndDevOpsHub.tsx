@@ -13,7 +13,7 @@ import {
 
 export const SprintAndDevOpsHub: React.FC = () => {
   const { sprintStories, showToast } = useRestaurant();
-  const [activeTab, setActiveTab] = useState<'sprint' | 'docker' | 's3' | 'cicd' | 'backend'>('sprint');
+  const [activeTab, setActiveTab] = useState<'sprint' | 'docker' | 'nginx' | 's3' | 'cicd' | 'backend'>('sprint');
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   const copyToClipboard = (text: string, key: string) => {
@@ -27,6 +27,46 @@ export const SprintAndDevOpsHub: React.FC = () => {
   const donePoints = sprintStories
     .filter((s) => s.status === 'done')
     .reduce((acc, s) => acc + s.storyPoints, 0);
+
+  const nginxSnippet = `server {
+    listen 80;
+    listen 3000;
+    server_name localhost;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Enrutamiento SPA (React / React Native Web)
+    location / {
+        try_files $uri $uri/ /index.html;
+        add_header Cache-Control "no-cache, must-revalidate";
+    }
+
+    # Health check
+    location /health {
+        access_log off;
+        return 200 "healthy\\n";
+    }
+
+    # Proxy a API con resolución dinámica (evita que Nginx crashee si el backend no está iniciado)
+    location /api/ {
+        resolver 127.0.0.11 valid=30s ipv6=off;
+        set $backend_service "http://restoxyz-backend:5000";
+        proxy_pass $backend_service;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+
+        error_page 502 504 = @api_fallback;
+    }
+
+    location @api_fallback {
+        default_type application/json;
+        return 200 '{"status":"standalone","message":"POS Operando en modo local/independiente"}';
+    }
+}`;
 
   const dockerComposeSnippet = `services:
   # 1. Frontend Web App (React Native Web + Vite SPA)
@@ -105,12 +145,15 @@ networks:
   restaurant-net:
     driver: bridge`;
 
-  const dockerfileSnippet = `# PASO 1: Construir la imagen localmente antes de ejecutar:
+  const dockerfileSnippet = `# PASO 1: Construir la imagen localmente:
 # docker build -t posventa-app .
 #
-# PASO 2: Levantar el contenedor:
-# docker run -d -p 9090:80 --name mi-posventa posventa-app
-# (Acceder en http://localhost:9090)
+# PASO 2: Detener y eliminar contenedor previo si falló:
+# docker rm -f mi-posventa
+#
+# PASO 3: Levantar el contenedor en puerto 8080 (evitar 9001 si se usa MinIO):
+# docker run -d -p 8080:80 --name mi-posventa posventa-app
+# (Acceder en http://localhost:8080)
 
 # Multi-stage Build para Producción
 FROM node:20-alpine AS builder
@@ -282,12 +325,20 @@ public class RestaurantHub : Hub {
             docker-compose.yml
           </button>
           <button
+            onClick={() => setActiveTab('nginx')}
+            className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
+              activeTab === 'nginx' ? 'bg-teal-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            nginx.conf (Solución Error)
+          </button>
+          <button
             onClick={() => setActiveTab('s3')}
             className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
               activeTab === 's3' ? 'bg-amber-500 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            Almacenamiento S3 (MinIO)
+            Dockerfile
           </button>
           <button
             onClick={() => setActiveTab('cicd')}
@@ -439,6 +490,34 @@ public class RestaurantHub : Hub {
           </div>
           <pre className="p-4 bg-slate-900 border border-slate-800 rounded-2xl text-xs font-mono text-slate-200 overflow-x-auto leading-relaxed shadow-sm">
             {dockerComposeSnippet}
+          </pre>
+        </div>
+      )}
+
+      {activeTab === 'nginx' && (
+        <div className="mt-5 space-y-4">
+          <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-xs">
+            <span className="font-bold text-emerald-800 block mb-1">
+              ✓ Solución al error: &quot;host not found in upstream restoxyz-backend in default.conf:15&quot;
+            </span>
+            <p className="text-emerald-700 leading-relaxed">
+              El error se producía porque Nginx intentaba resolver el host estático <code className="bg-emerald-100 px-1 rounded font-mono">restoxyz-backend</code> al arrancar el contenedor. Al cambiarlo por una variable con <code className="bg-emerald-100 px-1 rounded font-mono">resolver 127.0.0.11</code> y respuesta de contingencia, Nginx ya no se detiene y arranca perfectamente de inmediato.
+            </p>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-mono font-bold text-teal-800 uppercase">
+              nginx.conf (Configuración Corregida)
+            </span>
+            <button
+              onClick={() => copyToClipboard(nginxSnippet, 'nginx')}
+              className="px-3 py-1.5 bg-white hover:bg-slate-100 border border-slate-300 text-slate-800 rounded-lg text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
+            >
+              {copiedKey === 'nginx' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+              <span>{copiedKey === 'nginx' ? 'Copiado' : 'Copiar nginx.conf'}</span>
+            </button>
+          </div>
+          <pre className="p-4 bg-slate-900 border border-slate-800 rounded-2xl text-xs font-mono text-slate-200 overflow-x-auto leading-relaxed shadow-sm">
+            {nginxSnippet}
           </pre>
         </div>
       )}
