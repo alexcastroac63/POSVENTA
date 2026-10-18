@@ -6,6 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRestaurant } from '../../context/RestaurantContext';
 import { PaymentMethod, PaymentEntry } from '../../types/restaurant';
+import { HistoricalInvoiceCard } from '../cashier/HistoricalInvoiceCard';
 import confetti from 'canvas-confetti';
 import {
   X,
@@ -17,6 +18,9 @@ import {
   CheckCircle2,
   Trash2,
   ShieldCheck,
+  Printer,
+  ArrowRight,
+  Check,
 } from 'lucide-react';
 
 export const PaymentModal: React.FC = () => {
@@ -30,6 +34,8 @@ export const PaymentModal: React.FC = () => {
     processPayment,
     showToast,
     setCurrentScreen,
+    lastProcessedInvoice,
+    selectedChannel,
   } = useRestaurant();
 
   const subtotal = activeCartItems.reduce((acc, item) => acc + item.subtotal, 0);
@@ -40,13 +46,15 @@ export const PaymentModal: React.FC = () => {
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
   const [changeAmount, setChangeAmount] = useState<number>(0);
 
+  // Initialize tenders only once when the modal opens
   useEffect(() => {
     if (showPaymentModal) {
-      setTenders([{ method: 'efectivo', amount: orderTotal }]);
+      const initialTotal = activeOrder ? activeOrder.total : +(subtotal + tax).toFixed(2);
+      setTenders([{ method: 'efectivo', amount: initialTotal }]);
       setIsSuccess(false);
       setChangeAmount(0);
     }
-  }, [showPaymentModal, orderTotal]);
+  }, [showPaymentModal]);
 
   if (!showPaymentModal) return null;
 
@@ -98,73 +106,183 @@ export const PaymentModal: React.FC = () => {
     }
   };
 
-  const handleFinish = () => {
+  // Keyboard shortcut: Press Enter or Escape on success screen to immediately accept
+  useEffect(() => {
+    if (!isSuccess) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === 'Escape') {
+        e.preventDefault();
+        handleAcceptToChannels();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isSuccess]);
+
+  // Navigate back to channels screen (Request 4)
+  const handleAcceptToChannels = () => {
     setShowPaymentModal(false);
     setIsSuccess(false);
-    setCurrentScreen('table_map');
+    setTenders([]);
+    setChangeAmount(0);
+    setCurrentScreen('channel_select');
+    showToast('Cobro liquidado • Retornando a Pantalla de Canales');
+  };
+
+  // Navigate back to origin channel (e.g. Mesas)
+  const handleAcceptToOrigin = () => {
+    setShowPaymentModal(false);
+    setIsSuccess(false);
+    setTenders([]);
+    setChangeAmount(0);
+    if (selectedChannel === 'mesa') {
+      setCurrentScreen('table_map');
+      showToast('Cobro liquidado • Retornando al canal de Mesas (Salón)');
+    } else {
+      setCurrentScreen('channel_select');
+      showToast('Cobro liquidado • Retornando a Pantalla de Canales');
+    }
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 font-sans animate-fadeIn">
-      <div className="w-full max-w-2xl bg-white border border-slate-300 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          if (isSuccess) handleAcceptToChannels();
+          else setShowPaymentModal(false);
+        }
+      }}
+      className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 font-sans animate-fadeIn"
+    >
+      <div className="w-full max-w-3xl bg-white border border-slate-300 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[94vh]">
         {/* Header */}
-        <div className="bg-slate-100 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-mono font-bold text-emerald-700 uppercase tracking-wider block">
-              CU-08: PROCESAMIENTO DE PAGOS & COBROS MIXTOS
-            </span>
-            <h3 className="text-lg sm:text-xl font-black text-slate-900 uppercase">
-              Liquidación de Cuenta {selectedTable ? `- Mesa ${selectedTable.number}` : ''}
-            </h3>
-          </div>
-          {!isSuccess && (
+        <div
+          className={`px-6 py-4 border-b flex items-center justify-between ${
+            isSuccess
+              ? 'bg-emerald-600 text-white border-emerald-700'
+              : 'bg-slate-100 text-slate-900 border-slate-200'
+          }`}
+        >
+          {isSuccess && lastProcessedInvoice ? (
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-white/20 border-2 border-white/40 flex items-center justify-center flex-shrink-0 animate-bounce">
+                <CheckCircle2 className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <span className="text-[10px] font-mono font-bold tracking-widest uppercase bg-white/25 px-2 py-0.5 rounded text-white inline-block">
+                  COMPROBANTE OFICIAL EMITIDO
+                </span>
+                <h3 className="text-base sm:text-lg font-black tracking-tight mt-0.5">
+                  ¡Cobro Realizado con Éxito!
+                </h3>
+                <p className="text-xs text-emerald-100 font-mono">
+                  Factura Emitida: <strong className="text-white underline">{lastProcessedInvoice.header.documentNumber}</strong> (Ticket #{lastProcessedInvoice.header.ticketNumber})
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <span className="text-[10px] font-mono font-bold text-emerald-700 uppercase tracking-wider block">
+                CU-08: PROCESAMIENTO DE PAGOS & COBROS MIXTOS
+              </span>
+              <h3 className="text-lg sm:text-xl font-black text-slate-900 uppercase">
+                Liquidación de Cuenta {selectedTable ? `- Mesa ${selectedTable.number}` : ''}
+              </h3>
+            </div>
+          )}
+
+          <div className="flex items-center gap-2">
+            {isSuccess && (
+              <button
+                type="button"
+                onClick={handleAcceptToChannels}
+                className="px-3.5 py-1.5 bg-white text-emerald-800 hover:bg-emerald-50 rounded-xl text-xs font-black shadow-xs transition flex items-center gap-1 cursor-pointer active:scale-95"
+                title="Aceptar y volver a la pantalla de Canales"
+              >
+                <Check className="w-3.5 h-3.5" />
+                <span>Aceptar</span>
+              </button>
+            )}
+
             <button
-              onClick={() => setShowPaymentModal(false)}
-              className="p-1.5 text-slate-500 hover:text-slate-900 rounded-lg hover:bg-slate-200 cursor-pointer"
+              onClick={isSuccess ? handleAcceptToChannels : () => setShowPaymentModal(false)}
+              className={`p-1.5 rounded-lg transition cursor-pointer ${
+                isSuccess
+                  ? 'text-white/80 hover:text-white hover:bg-emerald-700'
+                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-200'
+              }`}
+              title={isSuccess ? 'Aceptar y volver a la pantalla de Canales' : 'Cerrar'}
             >
               <X className="w-5 h-5" />
             </button>
-          )}
+          </div>
         </div>
 
-        {isSuccess ? (
-          /* Payment Success Screen */
-          <div className="p-8 flex flex-col items-center justify-center text-center space-y-4 bg-slate-50">
-            <div className="w-20 h-20 rounded-full bg-emerald-100 border-4 border-emerald-300 flex items-center justify-center text-emerald-700 shadow-md animate-bounce">
-              <CheckCircle2 className="w-10 h-10" />
+        {isSuccess && lastProcessedInvoice ? (
+          /* Ventana Flotante Exclusiva de la Factura Emitida con Footer Fijo */
+          <>
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 bg-slate-100/70">
+              {/* Banner de Cambio si aplica */}
+              {changeAmount > 0 && (
+                <div className="bg-emerald-50 border-2 border-emerald-400 text-emerald-950 rounded-2xl p-4 flex items-center justify-between shadow-2xs">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center">
+                      <Banknote className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-black uppercase font-mono block text-emerald-900">
+                        CAMBIO / VUELTO A ENTREGAR:
+                      </span>
+                      <span className="text-[11px] text-emerald-700 font-medium">
+                        Entregar al cliente de inmediato
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-3xl font-black font-mono text-emerald-700">
+                    ${changeAmount.toFixed(2)}
+                  </span>
+                </div>
+              )}
+
+              {/* Factura Emitida Completa (Encabezado, Detalle y Sub-detalle) */}
+              <div>
+                <HistoricalInvoiceCard invoice={lastProcessedInvoice} showPrintAction={true} />
+              </div>
             </div>
 
-            <div>
-              <span className="text-xs font-mono font-bold text-emerald-700 uppercase tracking-widest block">
-                TRANSACCIÓN EXITOSA
-              </span>
-              <h2 className="text-2xl font-black text-slate-900 uppercase mt-1">
-                Cuenta Liquidada con Éxito
-              </h2>
-              <p className="text-xs text-slate-500 mt-1">
-                Procesado por cajero: <strong>{currentUser.name}</strong> | Folio #{activeOrder?.orderNumber || 104}
-              </p>
-            </div>
-
-            {/* Change banner */}
-            <div className="bg-white border-2 border-emerald-500 rounded-2xl p-5 w-full max-w-sm text-center shadow-sm">
-              <span className="text-xs font-mono uppercase text-slate-500 font-bold block">
-                CAMBIO / VUELTO A ENTREGAR:
-              </span>
-              <span className="text-3xl font-black text-emerald-700 font-mono mt-1 block">
-                ${changeAmount.toFixed(2)}
-              </span>
-            </div>
-
-            <div className="pt-4 flex items-center gap-3 w-full max-w-sm">
+            {/* Footer Fijo Siempre Visible al Fondo (No requiere hacer scroll para ver Aceptar) */}
+            <div className="p-4 bg-white border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md z-10">
               <button
-                onClick={handleFinish}
-                className="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-black py-3 px-4 rounded-xl text-xs uppercase tracking-wider transition shadow-sm cursor-pointer"
+                type="button"
+                onClick={() => window.print()}
+                className="w-full sm:w-auto px-4 py-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-800 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer active:scale-95"
               >
-                Aceptar & Volver a Mesas
+                <Printer className="w-4 h-4 text-slate-600" />
+                <span>Imprimir Factura</span>
               </button>
+
+              <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+                {selectedChannel === 'mesa' && (
+                  <button
+                    type="button"
+                    onClick={handleAcceptToOrigin}
+                    className="w-full sm:w-auto px-5 py-3 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl text-xs sm:text-sm transition cursor-pointer active:scale-98 flex items-center justify-center gap-1.5"
+                  >
+                    <span>Volver a Mesas (Salón)</span>
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleAcceptToChannels}
+                  className="w-full sm:w-auto px-8 py-3 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-black rounded-xl text-xs sm:text-sm uppercase tracking-wider transition shadow-md cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Aceptar y Volver a Canales</span>
+                </button>
+              </div>
             </div>
-          </div>
+          </>
         ) : (
           /* Payment Form */
           <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 bg-white">
@@ -239,52 +357,76 @@ export const PaymentModal: React.FC = () => {
               <span className="text-xs font-mono font-bold text-slate-500 uppercase tracking-wider block mb-2">
                 Billetes Rápidos (Efectivo):
               </span>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
                 {[10, 20, 50, 100].map((val) => (
                   <button
                     key={val}
+                    type="button"
                     onClick={() => handleFastCash(val)}
-                    className="py-2.5 bg-white hover:bg-emerald-50 hover:border-emerald-500 border border-slate-300 text-slate-800 font-black rounded-xl text-sm font-mono transition flex items-center justify-center gap-1 active:scale-95 cursor-pointer shadow-2xs"
+                    className="p-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-900 rounded-xl font-mono font-bold text-xs transition cursor-pointer shadow-2xs active:scale-95 text-center"
                   >
-                    <Banknote className="w-3.5 h-3.5 text-emerald-600" />
+                    +${val}
+                  </button>
+                ))}
+                {[200, 500].map((val) => (
+                  <button
+                    key={val}
+                    type="button"
+                    onClick={() => handleFastCash(val)}
+                    className="p-2 bg-slate-50 hover:bg-slate-100 border border-slate-300 text-slate-700 rounded-xl font-mono font-bold text-xs transition cursor-pointer shadow-2xs active:scale-95 text-center"
+                  >
                     +${val}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Active Tenders Breakdown List */}
+            {/* Split / Tendered Entries List */}
             <div>
-              <span className="text-xs font-mono font-bold text-slate-500 uppercase tracking-wider block mb-2">
-                Desglose de Formas de Pago Aplicadas:
-              </span>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-mono font-bold text-slate-500 uppercase tracking-wider block">
+                  Desglose de Formas de Pago Ingresadas:
+                </span>
+                <span className="text-[11px] text-slate-500">
+                  {tenders.length} método(s) registrado(s)
+                </span>
+              </div>
+
               <div className="space-y-2">
                 {tenders.map((entry, idx) => (
                   <div
                     key={idx}
-                    className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center justify-between shadow-2xs"
+                    className="flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-slate-50/60 shadow-2xs"
                   >
-                    <div className="flex items-center gap-2.5">
-                      <div className="p-1.5 rounded-lg bg-white border border-slate-200 text-slate-700">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-emerald-700 font-bold">
                         {entry.method === 'efectivo' && <Banknote className="w-4 h-4 text-emerald-600" />}
                         {entry.method === 'tarjeta' && <CreditCard className="w-4 h-4 text-sky-600" />}
                         {entry.method === 'vales' && <Ticket className="w-4 h-4 text-purple-600" />}
                         {entry.method === 'transferencia' && <QrCode className="w-4 h-4 text-amber-600" />}
                       </div>
-                      <span className="text-xs font-bold uppercase text-slate-800 tracking-wide">
-                        {entry.method}
-                      </span>
+                      <div>
+                        <span className="text-xs font-bold text-slate-800 uppercase block">
+                          {entry.method}
+                        </span>
+                        <span className="text-[10px] text-slate-400">
+                          {entry.method === 'efectivo' ? 'Pago en caja' : 'Comprobante digital'}
+                        </span>
+                      </div>
                     </div>
 
                     <div className="flex items-center gap-3">
-                      <span className="text-sm font-black font-mono text-emerald-700">
-                        ${entry.amount.toFixed(2)}
-                      </span>
+                      <div className="text-right">
+                        <span className="text-base font-black font-mono text-slate-900 block">
+                          ${entry.amount.toFixed(2)}
+                        </span>
+                      </div>
                       <button
                         onClick={() => handleRemoveTender(idx)}
-                        className="text-slate-400 hover:text-rose-600 p-1 cursor-pointer"
+                        className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                        title="Eliminar este abono"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
@@ -292,32 +434,30 @@ export const PaymentModal: React.FC = () => {
               </div>
             </div>
 
-            {/* Auditor Info Strip */}
-            <div className="pt-2 flex items-center gap-1.5 text-[11px] text-slate-500">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Transacción auditada bajo usuario cajero: <strong>{currentUser.name}</strong></span>
+            {/* Bottom Actions */}
+            <div className="pt-4 border-t border-slate-200 flex items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => setShowPaymentModal(false)}
+                className="px-4 py-3 bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 rounded-xl text-xs font-bold uppercase tracking-wider transition cursor-pointer shadow-2xs"
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="button"
+                onClick={handleProcess}
+                disabled={totalTendered < orderTotal}
+                className="flex-1 py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black rounded-xl text-xs uppercase tracking-wider transition shadow-md flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <ShieldCheck className="w-4 h-4" />
+                <span>
+                  {totalTendered >= orderTotal
+                    ? `Liquidar y Emitir Factura ($${totalTendered.toFixed(2)})`
+                    : `Faltan $${remainingBalance.toFixed(2)} para cubrir`}
+                </span>
+              </button>
             </div>
-          </div>
-        )}
-
-        {/* Footer */}
-        {!isSuccess && (
-          <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
-            <button
-              onClick={() => setShowPaymentModal(false)}
-              className="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-900 cursor-pointer"
-            >
-              Cancelar
-            </button>
-
-            <button
-              onClick={handleProcess}
-              disabled={totalTendered < orderTotal}
-              className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 active:scale-98 disabled:opacity-50 text-white font-black rounded-xl text-xs sm:text-sm uppercase tracking-wider transition flex items-center gap-2 shadow-md cursor-pointer"
-            >
-              <CheckCircle2 className="w-4 h-4" />
-              <span>CONFIRMAR & REGISTRAR COBRO (${totalTendered.toFixed(2)})</span>
-            </button>
           </div>
         )}
       </div>

@@ -6,10 +6,19 @@
 import React, { useState } from 'react';
 import { useRestaurant } from '../../context/RestaurantContext';
 import { INITIAL_USERS } from '../../data/initialData';
-import { ShoppingCart, Lock, User as UserIcon, Store, MonitorCheck, ShieldCheck, ArrowRight } from 'lucide-react';
+import {
+  ShoppingCart,
+  Lock,
+  User as UserIcon,
+  Store,
+  MonitorCheck,
+  ShieldCheck,
+  ArrowRight,
+  ChefHat,
+} from 'lucide-react';
 
 export const LoginScreen: React.FC = () => {
-  const { login, branch, setCurrentScreen, showToast } = useRestaurant();
+  const { login, branch, setCurrentScreen, setDeviceMode, showToast } = useRestaurant();
   const [username, setUsername] = useState('sofia');
   const [password, setPassword] = useState('••••••••');
   const [errorMsg, setErrorMsg] = useState('');
@@ -104,8 +113,58 @@ export const LoginScreen: React.FC = () => {
             </button>
           </form>
 
-            {/* Alternate Site Access Card (Backoffice Outside POS) */}
-            <div className="w-full mt-6 pt-5 border-t border-slate-200">
+            {/* Standalone Complementary Applications Section (Outside POS) */}
+            <div className="w-full mt-6 pt-5 border-t border-slate-200 space-y-3">
+              <div className="text-center mb-1">
+                <span className="text-[10px] font-mono font-black text-slate-500 uppercase tracking-wider block">
+                  APLICACIONES COMPLEMENTARIAS INDEPENDIENTES
+                </span>
+                <span className="text-[11px] text-slate-400">
+                  Acceso directo fuera del terminal de punto de venta (POS)
+                </span>
+              </div>
+
+              {/* 1. KDS Kitchen Display System Standalone Card */}
+              <div className="bg-gradient-to-br from-amber-950 via-slate-900 to-slate-900 text-white p-4 rounded-2xl shadow-md border border-amber-800/60">
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 bg-amber-500/20 text-amber-400 rounded-lg border border-amber-500/30">
+                      <ChefHat className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-black uppercase tracking-wider text-amber-300">
+                        KDS Pantalla de Cocina
+                      </h4>
+                      <p className="text-[10px] text-slate-400 font-medium">
+                        Sistema industrial para monitor de comandas y cocción
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-[9px] font-mono font-bold bg-amber-500/30 text-amber-300 border border-amber-500/40 px-1.5 py-0.5 rounded">
+                    KDS COCINA
+                  </span>
+                </div>
+
+                <p className="text-[11px] text-slate-300 leading-relaxed mb-3">
+                  Recepción de órdenes por estaciones (parrilla, freidora, barra y pase), cronómetros de preparación, semáforos de demora y timbres sonoros.
+                </p>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCurrentScreen('kds');
+                    setDeviceMode('kds_monitor');
+                    showToast('Iniciando KDS - Pantalla de Cocina');
+                  }}
+                  className="w-full py-2.5 px-3 bg-amber-600 hover:bg-amber-500 text-slate-950 font-black rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm cursor-pointer active:scale-98"
+                >
+                  <ChefHat className="w-3.5 h-3.5" />
+                  <span>Abrir KDS Pantalla de Cocina</span>
+                  <ArrowRight className="w-3.5 h-3.5 ml-auto" />
+                </button>
+              </div>
+
+              {/* 2. Backoffice Administration Standalone Card */}
               <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-4 rounded-2xl shadow-md border border-slate-700">
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div className="flex items-center gap-2">
@@ -114,10 +173,10 @@ export const LoginScreen: React.FC = () => {
                     </div>
                     <div>
                       <h4 className="text-xs font-black uppercase tracking-wider text-white">
-                        Sitio Alterno de Configuración
+                        Administración & Backoffice
                       </h4>
                       <p className="text-[10px] text-slate-400 font-medium">
-                        Administración central fuera del POS
+                        Portal central de configuración y catálogo maestro
                       </p>
                     </div>
                   </div>
@@ -127,7 +186,7 @@ export const LoginScreen: React.FC = () => {
                 </div>
 
                 <p className="text-[11px] text-slate-300 leading-relaxed mb-3">
-                  Configura el maestro de <strong>productos</strong> (cocina vs armado), <strong>canales de venta</strong>, <strong>usuarios</strong>, <strong>perfiles y accesos</strong>, <strong>menús omnicanal</strong> y <strong>descuentos</strong>.
+                  Maestro de <strong>productos</strong> (cocina vs armado), <strong>canales de venta</strong>, <strong>usuarios</strong>, <strong>perfiles RBAC</strong>, <strong>menús omnicanal</strong> y <strong>descuentos</strong>.
                 </p>
 
                 <button
@@ -138,8 +197,9 @@ export const LoginScreen: React.FC = () => {
                   }}
                   className="w-full py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-sm cursor-pointer active:scale-98"
                 >
-                  <span>Acceder a Configuraciones Backoffice</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>Acceder a Administración Backoffice</span>
+                  <ArrowRight className="w-3.5 h-3.5 ml-auto" />
                 </button>
               </div>
             </div>

@@ -15,10 +15,11 @@ import {
   Bike,
   ShoppingBag,
   Search,
+  Receipt,
 } from 'lucide-react';
 
 export const ReportsAuditScreen: React.FC = () => {
-  const { auditLogs } = useRestaurant();
+  const { auditLogs, historicalInvoices, setCurrentScreen } = useRestaurant();
   const [selectedAuditFilter, setSelectedAuditFilter] = useState<string>('todos');
   const [auditSearch, setAuditSearch] = useState<string>('');
 
@@ -68,9 +69,19 @@ export const ReportsAuditScreen: React.FC = () => {
           </p>
         </div>
 
-        {/* Date range badge */}
-        <div className="bg-white border border-slate-300 px-3 py-1.5 rounded-xl text-xs font-mono text-slate-700 shadow-2xs">
-          Jornada Operativa: <strong className="text-emerald-700">Hoy ({new Date().toLocaleDateString()})</strong>
+        {/* Actions & Date range badge */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={() => setCurrentScreen('cashier')}
+            className="bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 px-3 py-1.5 rounded-xl text-xs font-bold shadow-2xs transition flex items-center gap-1.5 cursor-pointer active:scale-95"
+            title="Ir al módulo de Facturas Históricas"
+          >
+            <Receipt className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Facturas Históricas ({historicalInvoices.length})</span>
+          </button>
+          <div className="bg-white border border-slate-300 px-3 py-1.5 rounded-xl text-xs font-mono text-slate-700 shadow-2xs">
+            Jornada Operativa: <strong className="text-emerald-700">Hoy ({new Date().toLocaleDateString()})</strong>
+          </div>
         </div>
       </div>
 

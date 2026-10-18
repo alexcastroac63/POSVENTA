@@ -11,6 +11,7 @@ import { AdminChannelsView } from './AdminChannelsView';
 import { AdminUsersView } from './AdminUsersView';
 import { AdminProfilesView } from './AdminProfilesView';
 import { AdminDiscountsView } from './AdminDiscountsView';
+import { SprintAndDevOpsHub } from '../devops/SprintAndDevOpsHub';
 import {
   UtensilsCrossed,
   Package,
@@ -18,6 +19,7 @@ import {
   Users,
   ShieldCheck,
   Percent,
+  Terminal,
   LogOut,
   ArrowRight,
   Store,
@@ -28,7 +30,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 
-type AdminTab = 'menus' | 'products' | 'channels' | 'users' | 'profiles' | 'discounts';
+type AdminTab = 'menus' | 'products' | 'channels' | 'users' | 'profiles' | 'discounts' | 'devops';
 
 export const AdminConfigLayout: React.FC = () => {
   const {
@@ -79,6 +81,11 @@ export const AdminConfigLayout: React.FC = () => {
       label: 'Descuentos & Cupones',
       icon: <Percent className="w-4 h-4" />,
     },
+    {
+      id: 'devops',
+      label: 'Sprint & DevOps',
+      icon: <Terminal className="w-4 h-4" />,
+    },
   ];
 
   const renderActiveView = () => {
@@ -95,6 +102,8 @@ export const AdminConfigLayout: React.FC = () => {
         return <AdminProfilesView />;
       case 'discounts':
         return <AdminDiscountsView />;
+      case 'devops':
+        return <SprintAndDevOpsHub />;
       default:
         return <AdminMenusView />;
     }

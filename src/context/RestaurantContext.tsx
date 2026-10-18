@@ -23,6 +23,11 @@ import {
   RoleProfile,
   RolePermissions,
   DiscountPolicy,
+  HistoricalInvoice,
+  HistoricalInvoiceItem,
+  HistoricalInvoiceInternalProduct,
+  HistoricalInvoiceHeader,
+  ProductPreparationType,
 } from '../types/restaurant';
 import {
   INITIAL_USERS,
@@ -36,6 +41,7 @@ import {
   INITIAL_CHANNELS,
   INITIAL_PROFILES,
   INITIAL_DISCOUNTS,
+  INITIAL_HISTORICAL_INVOICES,
 } from '../data/initialData';
 
 export type ActiveScreen =
@@ -102,6 +108,14 @@ interface RestaurantContextType {
   // Orders & State
   orders: Order[];
   activeOrder: Order | null;
+  historicalInvoices: HistoricalInvoice[];
+  setHistoricalInvoices: React.Dispatch<React.SetStateAction<HistoricalInvoice[]>>;
+  lastProcessedInvoice: HistoricalInvoice | null;
+  setLastProcessedInvoice: (inv: HistoricalInvoice | null) => void;
+  selectedInvoiceForDetail: HistoricalInvoice | null;
+  setSelectedInvoiceForDetail: (inv: HistoricalInvoice | null) => void;
+  showInvoiceDetailModal: boolean;
+  setShowInvoiceDetailModal: (show: boolean) => void;
   cashShift: CashShift;
   auditLogs: AuditLog[];
   sprintStories: SprintUserStory[];
@@ -199,6 +213,10 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [showJoinTablesModal, setShowJoinTablesModal] = useState<boolean>(false);
 
   const [orders, setOrders] = useState<Order[]>(INITIAL_ORDERS);
+  const [historicalInvoices, setHistoricalInvoices] = useState<HistoricalInvoice[]>(INITIAL_HISTORICAL_INVOICES);
+  const [lastProcessedInvoice, setLastProcessedInvoice] = useState<HistoricalInvoice | null>(null);
+  const [selectedInvoiceForDetail, setSelectedInvoiceForDetail] = useState<HistoricalInvoice | null>(null);
+  const [showInvoiceDetailModal, setShowInvoiceDetailModal] = useState<boolean>(false);
   const [cashShift, setCashShift] = useState<CashShift>(INITIAL_CASH_SHIFT);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>(INITIAL_AUDIT_LOGS);
   const [sprintStories] = useState<SprintUserStory[]>(INITIAL_SPRINT_STORIES);
@@ -547,12 +565,60 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           o.tableId === selectedTable.id &&
           ['abierta', 'en_cocina', 'lista_para_servir', 'en_precuenta'].includes(o.status)
       ) || null
-    : orders.find((o) => o.status === 'en_cocina') || null;
+    : orders.find(
+        (o) =>
+          !o.tableId &&
+          o.channel === selectedChannel &&
+          ['abierta', 'en_cocina', 'lista_para_servir', 'en_precuenta'].includes(o.status)
+      ) || null;
 
   const processPayment = (tenderEntries: PaymentEntry[]): PaymentTransaction | null => {
-    const targetOrder = activeOrder;
+    let targetOrder = activeOrder;
+
+    // If no existing saved order in kitchen, but there are active cart items, synthesize the order immediately
     if (!targetOrder) {
-      showToast('No hay una orden activa para procesar cobro');
+      if (activeCartItems.length === 0) {
+        showToast('No hay una comanda ni productos para procesar el cobro');
+        return null;
+      }
+
+      const subtotal = activeCartItems.reduce((acc, item) => acc + item.subtotal, 0);
+      const discountableSubtotal = activeCartItems
+        .filter((item) => item.allowDiscounts !== false)
+        .reduce((acc, item) => acc + item.subtotal, 0);
+      const discAmount = +(discountableSubtotal * (discountPercentage / 100)).toFixed(2);
+      const taxable = subtotal - discAmount;
+      const taxAmount = +(taxable * 0.10).toFixed(2);
+      const total = +(taxable + taxAmount).toFixed(2);
+      const orderNumber = 100 + orders.length + 1;
+
+      const synthesizedOrder: Order = {
+        id: `ord-${Date.now()}`,
+        orderNumber,
+        channel: selectedChannel,
+        platformName: selectedChannel === 'delivery' ? deliveryPlatform : undefined,
+        tableId: selectedTable?.id,
+        tableNumber: selectedTable?.number,
+        salonName: selectedTable?.salonName,
+        status: 'cobrada',
+        items: activeCartItems.map((i) => ({ ...i, status: 'entregado' })),
+        subtotal,
+        discountPercentage,
+        discountAmount: discAmount,
+        discountAuthorizedBy: discountAuthorizedBy || undefined,
+        taxAmount,
+        total,
+        waiterId: currentUser.id,
+        waiterName: currentUser.name,
+        createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      };
+
+      setOrders((prev) => [synthesizedOrder, ...prev]);
+      targetOrder = synthesizedOrder;
+    }
+
+    if (!targetOrder) {
+      showToast('No fue posible identificar la comanda');
       return null;
     }
 
@@ -563,6 +629,141 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
 
     const changeGiven = +(totalTendered - targetOrder.total).toFixed(2);
+
+    // Determine sales channel label
+    let channelLabel = 'Salón / Mesa';
+    if (targetOrder.channel === 'mesa') {
+      channelLabel = `Mesa #${targetOrder.tableNumber || selectedTable?.number || 1} (${targetOrder.salonName || selectedTable?.salonName || 'Salón Principal'})`;
+    } else if (targetOrder.channel === 'delivery') {
+      channelLabel = `Delivery (${targetOrder.platformName || 'Plataforma Online'})`;
+    } else if (targetOrder.channel === 'llevar') {
+      channelLabel = 'Para Llevar (Take Out)';
+    }
+
+    // Determine payment method label
+    let paymentSummary = '';
+    if (tenderEntries.length === 1) {
+      const m = tenderEntries[0].method;
+      paymentSummary = m.charAt(0).toUpperCase() + m.slice(1);
+    } else {
+      paymentSummary = `Pago Mixto (${tenderEntries.map((e) => `${e.method.toUpperCase()}: $${e.amount.toFixed(2)}`).join(' + ')})`;
+    }
+
+    const docNumber = `FAC-${new Date().getFullYear()}-${String(targetOrder.orderNumber).padStart(6, '0')}`;
+    const now = new Date();
+    const formattedDateTime = `${now.toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    })} ${now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+
+    // Build HistoricalInvoiceItems with internal products sub-detail
+    const invoiceItems: HistoricalInvoiceItem[] = targetOrder.items.map((orderItem) => {
+      const catalogMenu = menuItems.find((m) => m.id === orderItem.menuItemId);
+      let internalProductsList: HistoricalInvoiceInternalProduct[] = [];
+
+      if (catalogMenu?.internalProducts && catalogMenu.internalProducts.length > 0) {
+        internalProductsList = [...catalogMenu.internalProducts]
+          .sort((a, b) => a.order - b.order)
+          .map((ip) => {
+            const productMaster = products.find((p) => p.id === ip.productId);
+            // Search if customer selected an explicit substitute or modifier for this component
+            const matchedMod = orderItem.selectedModifiers?.find(
+              (mod) =>
+                mod.groupName.toLowerCase().includes(ip.productName.toLowerCase()) ||
+                mod.groupId.includes(ip.id) ||
+                mod.groupId.includes(ip.productId)
+            );
+
+            const selectedOption = matchedMod
+              ? matchedMod.optionName
+              : ip.modifiers?.find((m) => m.isDefault)?.name || ip.productName;
+
+            const priceDelta = matchedMod ? matchedMod.priceDelta : 0;
+            const prepType: ProductPreparationType =
+              productMaster?.preparationType || 'cocina_interna';
+
+            return {
+              order: ip.order,
+              productId: ip.productId,
+              productName: ip.productName,
+              preparationType: prepType,
+              station: productMaster?.station || catalogMenu.station,
+              selectedOptionName: selectedOption,
+              priceDelta,
+              isCostAdded: priceDelta > 0,
+            };
+          });
+      } else {
+        internalProductsList = [
+          {
+            order: 1,
+            productId: orderItem.menuItemId,
+            productName: orderItem.name,
+            preparationType:
+              orderItem.preparationType ||
+              (orderItem.station === 'barra' ? 'armado_menu' : 'cocina_interna'),
+            station: orderItem.station,
+            selectedOptionName: 'Receta e Insumos Estándar',
+            priceDelta: 0,
+            isCostAdded: false,
+          },
+        ];
+      }
+
+      return {
+        id: orderItem.id,
+        menuItemId: orderItem.menuItemId,
+        name: orderItem.name,
+        sku: orderItem.sku,
+        category: catalogMenu?.category || 'General',
+        quantity: orderItem.quantity,
+        basePrice: orderItem.basePrice,
+        unitPrice: orderItem.unitPrice,
+        subtotal: orderItem.subtotal,
+        allowDiscounts: orderItem.allowDiscounts !== false,
+        notes: orderItem.notes,
+        internalProducts: internalProductsList,
+        selectedModifiers: orderItem.selectedModifiers || [],
+      };
+    });
+
+    const isDiscountApplied =
+      (targetOrder.discountPercentage && targetOrder.discountPercentage > 0) ||
+      (targetOrder.discountAmount && targetOrder.discountAmount > 0);
+
+    const newInvoice: HistoricalInvoice = {
+      id: `inv-${Date.now()}-${targetOrder.orderNumber}`,
+      header: {
+        documentNumber: docNumber,
+        ticketNumber: targetOrder.orderNumber,
+        dateTime: formattedDateTime,
+        isoDate: now.toISOString(),
+        cashierId: currentUser.id,
+        cashierName: currentUser.name,
+        waiterName: targetOrder.waiterName || currentUser.name,
+        salesChannel: targetOrder.channel,
+        salesChannelLabel: channelLabel,
+        tableNumber: targetOrder.tableNumber,
+        salonName: targetOrder.salonName,
+        subtotal: targetOrder.subtotal,
+        taxAmount: targetOrder.taxAmount,
+        totalAmount: targetOrder.total,
+        totalCharged: totalTendered,
+        changeGiven,
+        paymentMethod: paymentSummary,
+        paymentEntries: tenderEntries,
+        discountApplied: Boolean(isDiscountApplied),
+        discountPercentage: targetOrder.discountPercentage || 0,
+        discountAmount: targetOrder.discountAmount || 0,
+        discountAuthorizedBy: targetOrder.discountAuthorizedBy,
+      },
+      items: invoiceItems,
+      createdAt: now.toLocaleTimeString(),
+    };
+
+    setHistoricalInvoices((prev) => [newInvoice, ...prev]);
+    setLastProcessedInvoice(newInvoice);
 
     const transaction: PaymentTransaction = {
       id: `tx-${Date.now()}`,
@@ -576,6 +777,7 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       totalTendered,
       changeGiven,
       timestamp: new Date().toLocaleTimeString(),
+      invoiceId: newInvoice.id,
     };
 
     // Mark order as paid
@@ -627,14 +829,14 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       'CORTE_CAJA',
       `Pago liquidado para Orden #${targetOrder.orderNumber} por $${targetOrder.total.toFixed(
         2
-      )} (${tenderEntries.map((e) => `${e.method}: $${e.amount}`).join(', ')})`,
+      )} (${tenderEntries.map((e) => `${e.method}: $${e.amount}`).join(', ')}). Factura generada: ${docNumber}`,
       undefined,
-      { changeGiven, totalTendered }
+      { changeGiven, totalTendered, documentNumber: docNumber, invoiceId: newInvoice.id }
     );
 
     setActiveCartItems([]);
     setSelectedTable(null);
-    showToast(`¡Cobro exitoso! Vuelto: $${changeGiven.toFixed(2)}`);
+    showToast(`¡Cobro ejecutado con éxito! Factura #${docNumber} generada.`);
     return transaction;
   };
 
@@ -1120,6 +1322,14 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         setShowJoinTablesModal,
         orders,
         activeOrder,
+        historicalInvoices,
+        setHistoricalInvoices,
+        lastProcessedInvoice,
+        setLastProcessedInvoice,
+        selectedInvoiceForDetail,
+        setSelectedInvoiceForDetail,
+        showInvoiceDetailModal,
+        setShowInvoiceDetailModal,
         cashShift,
         auditLogs,
         sprintStories,

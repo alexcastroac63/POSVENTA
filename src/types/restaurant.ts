@@ -66,6 +66,7 @@ export interface ProductModifierSubstitute {
   id: string;
   name: string;
   targetProductId?: string;
+  substituteProductId?: string; // ID del producto sustituto en catálogo
   priceDelta: number; // 0 = sin costo, > 0 = con costo
   isDefault?: boolean;
 }
@@ -260,6 +261,66 @@ export interface PaymentTransaction {
   totalTendered: number;
   changeGiven: number;
   timestamp: string;
+  invoiceId?: string;
+}
+
+export interface HistoricalInvoiceInternalProduct {
+  order: number;
+  productId: string;
+  productName: string;
+  preparationType: ProductPreparationType; // 'cocina_interna' | 'armado_menu'
+  station?: string;
+  selectedOptionName?: string;
+  priceDelta?: number;
+  isCostAdded?: boolean;
+}
+
+export interface HistoricalInvoiceItem {
+  id: string;
+  menuItemId: string;
+  name: string; // Menú enviado (Combo / Menú principal)
+  sku: string;
+  category?: string;
+  quantity: number;
+  basePrice: number;
+  unitPrice: number;
+  subtotal: number;
+  allowDiscounts?: boolean;
+  notes?: string;
+  internalProducts: HistoricalInvoiceInternalProduct[]; // Sub detalle de productos internos
+  selectedModifiers?: SelectedModifier[];
+}
+
+export interface HistoricalInvoiceHeader {
+  documentNumber: string; // e.g. "FAC-2026-000104" o "TICK-000104"
+  ticketNumber: number; // e.g. 104
+  dateTime: string; // e.g. "17/10/2026 11:35:10"
+  isoDate: string;
+  cashierId: string;
+  cashierName: string;
+  waiterName?: string;
+  salesChannel: SalesChannel;
+  salesChannelLabel: string; // e.g. "Mesa #4 (Salón 1)", "Para Llevar", "Delivery (Uber Eats)"
+  tableNumber?: number;
+  salonName?: string;
+  subtotal: number;
+  taxAmount: number;
+  totalAmount: number; // Monto total
+  totalCharged: number; // Monto cobrado
+  changeGiven: number; // Cambio / Vuelto entregado
+  paymentMethod: string; // e.g. "Efectivo", "Tarjeta Débito", "Mixto (Efectivo + Tarjeta)"
+  paymentEntries: PaymentEntry[];
+  discountApplied: boolean;
+  discountPercentage: number;
+  discountAmount: number;
+  discountAuthorizedBy?: string;
+}
+
+export interface HistoricalInvoice {
+  id: string;
+  header: HistoricalInvoiceHeader;
+  items: HistoricalInvoiceItem[];
+  createdAt: string;
 }
 
 export interface CashShift {

@@ -19,6 +19,7 @@ import { PreBillModal } from './components/pos/PreBillModal';
 import { SplitBillModal } from './components/pos/SplitBillModal';
 import { PaymentModal } from './components/pos/PaymentModal';
 import { DiscountAuthModal } from './components/pos/DiscountAuthModal';
+import { HistoricalInvoiceModal } from './components/cashier/HistoricalInvoiceModal';
 import { CheckCircle } from 'lucide-react';
 
 const MainContent: React.FC = () => {
@@ -77,6 +78,20 @@ const MainContent: React.FC = () => {
     );
   }
 
+  if (currentScreen === 'kds') {
+    return (
+      <main className="min-h-screen bg-slate-900 flex flex-col font-sans">
+        <KitchenDisplayScreen />
+        {toastMessage && (
+          <div className="fixed bottom-4 right-4 z-50 bg-white border-2 border-emerald-600 text-slate-900 px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2 text-xs font-bold animate-bounce">
+            <CheckCircle className="w-4 h-4 text-emerald-600" />
+            <span>{toastMessage}</span>
+          </div>
+        )}
+      </main>
+    );
+  }
+
   // Clean native full-screen layout without artificial laptop/device frames
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-800">
@@ -91,6 +106,7 @@ const MainContent: React.FC = () => {
       <SplitBillModal />
       <PaymentModal />
       <DiscountAuthModal />
+      <HistoricalInvoiceModal />
 
       {/* Global Toast Notification */}
       {toastMessage && (
