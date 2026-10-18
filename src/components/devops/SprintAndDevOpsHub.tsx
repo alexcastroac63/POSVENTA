@@ -13,7 +13,7 @@ import {
 
 export const SprintAndDevOpsHub: React.FC = () => {
   const { sprintStories, showToast } = useRestaurant();
-  const [activeTab, setActiveTab] = useState<'sprint' | 'docker' | 'nginx' | 's3' | 'cicd' | 'backend'>('sprint');
+  const [activeTab, setActiveTab] = useState<'sprint' | 'docker' | 'nginx' | 's3' | 'cicd' | 'backend' | 'schema'>('sprint');
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   const copyToClipboard = (text: string, key: string) => {
@@ -280,6 +280,205 @@ public class RestaurantHub : Hub {
         await Groups.AddToGroupAsync(Context.ConnectionId, station);
 }`;
 
+  const sqlSchemaSnippet = `-- ============================================================================
+-- RESTO-XYZ: ESQUEMA DE BASE DE DATOS RELACIONAL (POSTGRESQL / SQL DDL)
+-- ============================================================================
+
+-- 1. TABLA: ROLES Y PERFILES (RBAC)
+CREATE TABLE role_profiles (
+    id VARCHAR(50) PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    role_key VARCHAR(50) NOT NULL UNIQUE,
+    can_apply_discounts BOOLEAN DEFAULT FALSE,
+    can_cancel_orders BOOLEAN DEFAULT FALSE,
+    can_open_cash_shift BOOLEAN DEFAULT FALSE,
+    can_close_cash_shift BOOLEAN DEFAULT FALSE,
+    can_view_audit_logs BOOLEAN DEFAULT FALSE,
+    can_configure_catalog BOOLEAN DEFAULT FALSE,
+    can_manage_users BOOLEAN DEFAULT FALSE,
+    can_reopen_table BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 2. TABLA: USUARIOS Y PERSONAL
+CREATE TABLE users (
+    id VARCHAR(50) PRIMARY KEY,
+    name VARCHAR(120) NOT NULL,
+    role VARCHAR(50) NOT NULL REFERENCES role_profiles(role_key) ON UPDATE CASCADE,
+    pin VARCHAR(10) NOT NULL,
+    device VARCHAR(50) DEFAULT 'terminal',
+    avatar TEXT,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 3. TABLA: CANALES DE VENTA (OMNICANAL)
+CREATE TABLE sales_channels (
+    id VARCHAR(30) PRIMARY KEY, -- 'mesa', 'llevar', 'delivery'
+    name VARCHAR(100) NOT NULL,
+    code VARCHAR(20) NOT NULL,
+    description TEXT,
+    is_active BOOLEAN DEFAULT TRUE,
+    default_price_mode VARCHAR(20) DEFAULT 'base',
+    default_delta NUMERIC(10, 2) DEFAULT 0.00
+);
+
+-- 4. TABLA: MESAS Y SALONES
+CREATE TABLE restaurant_tables (
+    id VARCHAR(50) PRIMARY KEY,
+    number INT NOT NULL,
+    salon_id VARCHAR(50) NOT NULL,
+    salon_name VARCHAR(100) NOT NULL,
+    seats INT NOT NULL DEFAULT 4,
+    status VARCHAR(30) DEFAULT 'disponible',
+    current_order_id VARCHAR(50),
+    waiter_id VARCHAR(50) REFERENCES users(id) ON DELETE SET NULL,
+    waiter_name VARCHAR(120),
+    opened_at TIMESTAMP WITH TIME ZONE
+);
+
+-- 5. TABLA: PRODUCTOS BASE (CATÁLOGO MAESTRO: COCINA INTERNA VS ARMADO)
+CREATE TABLE products (
+    id VARCHAR(50) PRIMARY KEY,
+    sku VARCHAR(50) NOT NULL UNIQUE,
+    name VARCHAR(150) NOT NULL,
+    description TEXT,
+    category VARCHAR(100) NOT NULL,
+    cost NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+    preparation_type VARCHAR(30) NOT NULL, -- 'cocina_interna' (KDS), 'armado_menu'
+    station VARCHAR(30) DEFAULT 'parrilla',
+    is_active BOOLEAN DEFAULT TRUE
+);
+
+-- 6. TABLA: MENÚS Y COMBOS DE VENTA (MENU ITEMS)
+CREATE TABLE menu_items (
+    id VARCHAR(50) PRIMARY KEY,
+    sku VARCHAR(50) NOT NULL UNIQUE,
+    name VARCHAR(150) NOT NULL,
+    category VARCHAR(100) NOT NULL,
+    base_price NUMERIC(10, 2) NOT NULL,
+    image_url TEXT,
+    description TEXT,
+    allow_discounts BOOLEAN DEFAULT TRUE,
+    is_available_mesa BOOLEAN DEFAULT TRUE,
+    is_available_llevar BOOLEAN DEFAULT TRUE,
+    is_available_delivery BOOLEAN DEFAULT TRUE,
+    station VARCHAR(30) NOT NULL DEFAULT 'pase',
+    is_active BOOLEAN DEFAULT TRUE
+);
+
+-- 7. TABLA: PRODUCTOS INTERNOS DEL MENÚ CON ORDEN DE PREPARACIÓN
+CREATE TABLE menu_internal_products (
+    id VARCHAR(50) PRIMARY KEY,
+    menu_item_id VARCHAR(50) NOT NULL REFERENCES menu_items(id) ON DELETE CASCADE,
+    product_id VARCHAR(50) NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
+    product_name VARCHAR(150) NOT NULL,
+    preparation_order INT NOT NULL DEFAULT 1
+);
+
+-- 8. TABLA: MODIFICADORES Y SUSTITUCIONES DE PRODUCTOS INTERNOS
+CREATE TABLE internal_product_modifiers (
+    id VARCHAR(50) PRIMARY KEY,
+    internal_product_id VARCHAR(50) NOT NULL REFERENCES menu_internal_products(id) ON DELETE CASCADE,
+    name VARCHAR(120) NOT NULL,
+    price_delta NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+    is_default BOOLEAN DEFAULT FALSE
+);
+
+-- 9. TABLA: COMANDAS / ÓRDENES ACTIVAS
+CREATE TABLE orders (
+    id VARCHAR(50) PRIMARY KEY,
+    order_number INT NOT NULL,
+    channel VARCHAR(30) NOT NULL REFERENCES sales_channels(id),
+    platform_name VARCHAR(50),
+    table_id VARCHAR(50) REFERENCES restaurant_tables(id) ON DELETE SET NULL,
+    table_number INT,
+    salon_name VARCHAR(100),
+    status VARCHAR(30) NOT NULL DEFAULT 'abierta', -- 'abierta', 'en_cocina', 'lista_para_servir', 'en_precuenta', 'cobrada'
+    waiter_id VARCHAR(50) NOT NULL REFERENCES users(id),
+    waiter_name VARCHAR(120) NOT NULL,
+    subtotal NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+    discount_percentage NUMERIC(5, 2) DEFAULT 0.00,
+    discount_amount NUMERIC(10, 2) DEFAULT 0.00,
+    discount_authorized_by VARCHAR(120),
+    tax_amount NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+    total NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 10. TABLA: DETALLE DE COMANDA (ITEMS EN KDS)
+CREATE TABLE order_items (
+    id VARCHAR(50) PRIMARY KEY,
+    order_id VARCHAR(50) NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    menu_item_id VARCHAR(50) NOT NULL REFERENCES menu_items(id),
+    name VARCHAR(150) NOT NULL,
+    sku VARCHAR(50) NOT NULL,
+    unit_price NUMERIC(10, 2) NOT NULL,
+    quantity INT NOT NULL DEFAULT 1,
+    subtotal NUMERIC(10, 2) NOT NULL,
+    station VARCHAR(30) NOT NULL, -- 'parrilla', 'barra', 'freidora', 'pase'
+    status VARCHAR(30) NOT NULL DEFAULT 'en_cola', -- 'en_cola', 'preparando', 'listo', 'entregado'
+    notes TEXT
+);
+
+-- 11. TABLA: HISTORIAL DE FACTURAS EMITIDAS (ENCABEZADO HISTÓRICO)
+CREATE TABLE historical_invoices (
+    id VARCHAR(50) PRIMARY KEY,
+    document_number VARCHAR(50) NOT NULL UNIQUE, -- ej: FAC-2026-000101
+    ticket_number INT NOT NULL,
+    date_time_str VARCHAR(50) NOT NULL,
+    iso_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    cashier_id VARCHAR(50) NOT NULL REFERENCES users(id),
+    cashier_name VARCHAR(120) NOT NULL,
+    sales_channel VARCHAR(30) NOT NULL,
+    sales_channel_label VARCHAR(150) NOT NULL,
+    table_number INT,
+    subtotal NUMERIC(10, 2) NOT NULL,
+    tax_amount NUMERIC(10, 2) NOT NULL,
+    total_amount NUMERIC(10, 2) NOT NULL,
+    total_charged NUMERIC(10, 2) NOT NULL,
+    change_given NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+    payment_method VARCHAR(150) NOT NULL,
+    discount_applied BOOLEAN DEFAULT FALSE,
+    discount_amount NUMERIC(10, 2) DEFAULT 0.00,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 12. TABLA: DETALLE DE FACTURA HISTÓRICA CON PRODUCTOS INTERNOS
+CREATE TABLE historical_invoice_items (
+    id VARCHAR(50) PRIMARY KEY,
+    invoice_id VARCHAR(50) NOT NULL REFERENCES historical_invoices(id) ON DELETE CASCADE,
+    name VARCHAR(150) NOT NULL,
+    quantity INT NOT NULL,
+    unit_price NUMERIC(10, 2) NOT NULL,
+    subtotal NUMERIC(10, 2) NOT NULL
+);
+
+CREATE TABLE historical_invoice_internal_products (
+    id SERIAL PRIMARY KEY,
+    invoice_item_id VARCHAR(50) NOT NULL REFERENCES historical_invoice_items(id) ON DELETE CASCADE,
+    product_name VARCHAR(150) NOT NULL,
+    preparation_order INT NOT NULL,
+    preparation_type VARCHAR(30) NOT NULL,
+    selected_option_name VARCHAR(150) NOT NULL,
+    price_delta NUMERIC(10, 2) NOT NULL DEFAULT 0.00
+);
+
+-- 13. TABLA: TURNOS Y CORTES DE CAJA
+CREATE TABLE cash_shifts (
+    id VARCHAR(50) PRIMARY KEY,
+    opened_at VARCHAR(50) NOT NULL,
+    closed_at VARCHAR(50),
+    cashier_id VARCHAR(50) NOT NULL REFERENCES users(id),
+    cashier_name VARCHAR(120) NOT NULL,
+    initial_cash NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+    total_sales NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+    expected_cash_in_drawer NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+    status VARCHAR(20) NOT NULL DEFAULT 'abierto'
+);`;
+
   return (
     <div className="flex-1 bg-slate-50 flex flex-col p-3 sm:p-6 select-none font-sans overflow-y-auto">
       {/* Top Header */}
@@ -292,7 +491,7 @@ public class RestaurantHub : Hub {
             </h1>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            Planificación ágil de Historias de Usuario (CU-01 a CU-13), Docker S3, Backend y Pipeline CI/CD.
+            Planificación ágil de Historias de Usuario (CU-01 a CU-13), Base de Datos PostgreSQL, Docker S3, Backend y Pipeline CI/CD.
           </p>
         </div>
 
@@ -305,6 +504,14 @@ public class RestaurantHub : Hub {
             }`}
           >
             Tablero Sprint (2 Semanas)
+          </button>
+          <button
+            onClick={() => setActiveTab('schema')}
+            className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
+              activeTab === 'schema' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Esquema BD (PostgreSQL)
           </button>
           <button
             onClick={() => setActiveTab('docker')}
@@ -320,7 +527,7 @@ public class RestaurantHub : Hub {
               activeTab === 'nginx' ? 'bg-teal-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            nginx.conf (Solución Error)
+            nginx.conf
           </button>
           <button
             onClick={() => setActiveTab('s3')}
@@ -344,7 +551,7 @@ public class RestaurantHub : Hub {
               activeTab === 'backend' ? 'bg-slate-800 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            Backend C# .NET 8 / SignalR
+            Backend C# .NET 8
           </button>
         </div>
       </div>
@@ -582,6 +789,31 @@ public class RestaurantHub : Hub {
           </div>
           <pre className="p-4 bg-slate-900 border border-slate-800 rounded-2xl text-xs font-mono text-slate-200 overflow-x-auto leading-relaxed shadow-sm">
             {csharpSnippet}
+          </pre>
+        </div>
+      )}
+
+      {activeTab === 'schema' && (
+        <div className="mt-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-xs font-mono font-bold text-indigo-800 uppercase block">
+                database/schema.sql (Esquema Relacional PostgreSQL / DDL)
+              </span>
+              <span className="text-[11px] text-slate-500">
+                18 Tablas con claves primarias, foráneas, índices KDS y facturación histórica
+              </span>
+            </div>
+            <button
+              onClick={() => copyToClipboard(sqlSchemaSnippet, 'schema')}
+              className="px-3 py-1.5 bg-white hover:bg-slate-100 border border-slate-300 text-slate-800 rounded-lg text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
+            >
+              {copiedKey === 'schema' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+              <span>{copiedKey === 'schema' ? 'Copiado' : 'Copiar Esquema SQL'}</span>
+            </button>
+          </div>
+          <pre className="p-4 bg-slate-900 border border-slate-800 rounded-2xl text-xs font-mono text-slate-200 overflow-x-auto leading-relaxed shadow-sm max-h-[600px]">
+            {sqlSchemaSnippet}
           </pre>
         </div>
       )}
