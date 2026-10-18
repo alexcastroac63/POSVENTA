@@ -207,13 +207,20 @@ jobs:
           username: \${{ github.actor }}
           password: \${{ secrets.GITHUB_TOKEN }}
 
+      # Convertimos el nombre del repo a minúsculas (requisito estricto de Docker / GHCR)
+      - name: Lowercase Repository Name for Docker Tag
+        id: meta
+        run: |
+          REPO_LOWER=$(echo "\${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "image_tag=ghcr.io/\${REPO_LOWER}/restoxyz-ui:latest" >> \$GITHUB_OUTPUT
+
       - name: Build & Push Frontend Image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ghcr.io/\${{ github.repository }}/restoxyz-ui:latest
+          tags: \${{ steps.meta.outputs.image_tag }}
 
   # 3. Continuous Deployment: Production Release
   deploy-to-production:
