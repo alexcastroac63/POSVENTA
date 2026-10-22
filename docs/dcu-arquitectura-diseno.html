@@ -237,7 +237,7 @@
       </div>
 
       <!-- DESGLOSE DE TABLAS Y RELACIONES -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs mb-6">
         <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
           <div class="font-bold text-slate-900 text-sm flex items-center justify-between">
             <span>users & restaurant_tables</span>
@@ -270,6 +270,39 @@
           <p class="text-slate-600">
             <strong>Tabla intermedia:</strong> <code>menu_internal_products</code> vincula el combo de venta con sus insumos o productos base con orden de preparación.
           </p>
+        </div>
+      </div>
+
+      <!-- AUDITORÍA DE NORMALIZACIÓN (1FN, 2FN, 3FN Y BCNF) -->
+      <div class="border-t border-slate-200 pt-5 space-y-4">
+        <div class="flex items-center justify-between">
+          <h4 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+            Auditoría de Formas Normales (1FN, 2FN, 3FN y BCNF) & Correcciones Realizadas
+          </h4>
+          <span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">Certificado 3FN / BCNF</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          <div class="bg-amber-50/70 border border-amber-200 rounded-xl p-4 space-y-2 text-amber-950">
+            <strong class="font-bold block text-amber-900 text-xs">⚠️ Anomalías Detectadas en el Esquema Previo:</strong>
+            <ul class="list-disc list-inside space-y-1 text-slate-700">
+              <li><strong>Violación de 3FN en Mesas:</strong> <code>salon_name</code> y <code>waiter_name</code> estaban duplicados en cada mesa. No existía la tabla <code>salons</code>, provocando anomalías de inserción y modificación.</li>
+              <li><strong>Violación de 3FN en Catálogo:</strong> <code>category</code> y <code>station</code> eran cadenas de texto libre, propensas a errores tipográficos y sin integridad referencial.</li>
+              <li><strong>Dependencias Transitivas en Comandas:</strong> <code>orders</code> almacenaba <code>waiter_name</code>, <code>table_number</code> y <code>salon_name</code>, dependiendo transitivamente de claves foráneas.</li>
+              <li><strong>Métodos de Pago Desnormalizados:</strong> Strings sueltos sin control de autorización ni tipo de medio de cobro.</li>
+            </ul>
+          </div>
+
+          <div class="bg-emerald-50/70 border border-emerald-200 rounded-xl p-4 space-y-2 text-emerald-950">
+            <strong class="font-bold block text-emerald-900 text-xs">✅ Correcciones y Normalización Aplicadas:</strong>
+            <ul class="list-disc list-inside space-y-1 text-slate-700">
+              <li><strong>Nuevas Entidades Maestras (3FN):</strong> Se crearon <code>salons</code>, <code>product_categories</code>, <code>kitchen_stations</code> y <code>payment_methods</code> con PKs unívocas.</li>
+              <li><strong>Eliminación de Redundancia Operativa:</strong> Se suprimieron atributos transitivos en <code>restaurant_tables</code>, <code>orders</code>, <code>order_items</code> y <code>cash_shifts</code>.</li>
+              <li><strong>Vistas SQL Relacionales:</strong> Se crearon <code>v_restaurant_tables</code> y <code>v_active_orders</code> para proveer JOINs precalculados sin comprometer la pureza de 3FN.</li>
+              <li><strong>Inmutabilidad Fiscal Formalizada:</strong> Se delimitó formalmente el propósito de <code>historical_invoices</code> como snapshot inmutable para auditoría fiscal.</li>
+            </ul>
+          </div>
         </div>
       </div>
     </section>

@@ -282,7 +282,7 @@ public class RestaurantHub : Hub {
 }`;
 
   const sqlSchemaSnippet = `-- ============================================================================
--- RESTO-XYZ: ESQUEMA DE BASE DE DATOS RELACIONAL (POSTGRESQL / SQL DDL)
+-- RESTO-XYZ: ESQUEMA DE BASE DE DATOS RELACIONAL NORMALIZADO (3FN / BCNF)
 -- ============================================================================
 
 -- 1. TABLA: ROLES Y PERFILES (RBAC)
@@ -314,50 +314,83 @@ CREATE TABLE users (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 3. TABLA: CANALES DE VENTA (OMNICANAL)
+-- 3. TABLA: SALONES Y ÁREAS (3FN: Previene redundancia y anomalías)
+CREATE TABLE salons (
+    id VARCHAR(50) PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    floor INT DEFAULT 1,
+    is_active BOOLEAN DEFAULT TRUE
+);
+
+-- 4. TABLA: CANALES DE VENTA (OMNICANAL)
 CREATE TABLE sales_channels (
     id VARCHAR(30) PRIMARY KEY, -- 'mesa', 'llevar', 'delivery'
+    code VARCHAR(20) NOT NULL UNIQUE,
     name VARCHAR(100) NOT NULL,
-    code VARCHAR(20) NOT NULL,
     description TEXT,
     is_active BOOLEAN DEFAULT TRUE,
     default_price_mode VARCHAR(20) DEFAULT 'base',
     default_delta NUMERIC(10, 2) DEFAULT 0.00
 );
 
--- 4. TABLA: MESAS Y SALONES
+-- 5. TABLA: ESTACIONES DE COCINA (3FN)
+CREATE TABLE kitchen_stations (
+    id VARCHAR(30) PRIMARY KEY, -- 'parrilla', 'barra', 'freidora', 'pase'
+    code VARCHAR(30) NOT NULL UNIQUE,
+    name VARCHAR(100) NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE
+);
+
+-- 6. TABLA: CATEGORÍAS DE PRODUCTOS Y MENÚS (3FN)
+CREATE TABLE product_categories (
+    id VARCHAR(50) PRIMARY KEY,
+    code VARCHAR(50) NOT NULL UNIQUE,
+    name VARCHAR(100) NOT NULL,
+    display_order INT DEFAULT 1,
+    is_active BOOLEAN DEFAULT TRUE
+);
+
+-- 7. TABLA: MÉTODOS DE PAGO (3FN)
+CREATE TABLE payment_methods (
+    id VARCHAR(30) PRIMARY KEY,
+    code VARCHAR(30) NOT NULL UNIQUE,
+    name VARCHAR(100) NOT NULL,
+    is_cash BOOLEAN DEFAULT FALSE,
+    requires_authorization BOOLEAN DEFAULT FALSE
+);
+
+-- 8. TABLA: MESAS (Sin dependencias transitivas operativas)
 CREATE TABLE restaurant_tables (
     id VARCHAR(50) PRIMARY KEY,
     number INT NOT NULL,
-    salon_id VARCHAR(50) NOT NULL,
-    salon_name VARCHAR(100) NOT NULL,
+    salon_id VARCHAR(50) NOT NULL REFERENCES salons(id) ON UPDATE CASCADE,
     seats INT NOT NULL DEFAULT 4,
     status VARCHAR(30) DEFAULT 'disponible',
     current_order_id VARCHAR(50),
     waiter_id VARCHAR(50) REFERENCES users(id) ON DELETE SET NULL,
-    waiter_name VARCHAR(120),
-    opened_at TIMESTAMP WITH TIME ZONE
+    opened_at TIMESTAMP WITH TIME ZONE,
+    CONSTRAINT uq_table_salon UNIQUE (salon_id, number)
 );
 
--- 5. TABLA: PRODUCTOS BASE (CATÁLOGO MAESTRO: COCINA INTERNA VS ARMADO)
+-- 9. TABLA: PRODUCTOS BASE (CATÁLOGO MAESTRO: COCINA INTERNA VS ARMADO)
 CREATE TABLE products (
     id VARCHAR(50) PRIMARY KEY,
     sku VARCHAR(50) NOT NULL UNIQUE,
     name VARCHAR(150) NOT NULL,
     description TEXT,
-    category VARCHAR(100) NOT NULL,
+    category_id VARCHAR(50) NOT NULL REFERENCES product_categories(id),
     cost NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
     preparation_type VARCHAR(30) NOT NULL, -- 'cocina_interna' (KDS), 'armado_menu'
-    station VARCHAR(30) DEFAULT 'parrilla',
+    station_id VARCHAR(30) NOT NULL REFERENCES kitchen_stations(id),
     is_active BOOLEAN DEFAULT TRUE
 );
 
--- 6. TABLA: MENÚS Y COMBOS DE VENTA (MENU ITEMS)
+-- 10. TABLA: MENÚS Y COMBOS DE VENTA (MENU ITEMS)
 CREATE TABLE menu_items (
     id VARCHAR(50) PRIMARY KEY,
     sku VARCHAR(50) NOT NULL UNIQUE,
     name VARCHAR(150) NOT NULL,
-    category VARCHAR(100) NOT NULL,
+    category_id VARCHAR(50) NOT NULL REFERENCES product_categories(id),
     base_price NUMERIC(10, 2) NOT NULL,
     image_url TEXT,
     description TEXT,
@@ -365,77 +398,74 @@ CREATE TABLE menu_items (
     is_available_mesa BOOLEAN DEFAULT TRUE,
     is_available_llevar BOOLEAN DEFAULT TRUE,
     is_available_delivery BOOLEAN DEFAULT TRUE,
-    station VARCHAR(30) NOT NULL DEFAULT 'pase',
+    station_id VARCHAR(30) NOT NULL REFERENCES kitchen_stations(id),
     is_active BOOLEAN DEFAULT TRUE
 );
 
--- 7. TABLA: PRODUCTOS INTERNOS DEL MENÚ CON ORDEN DE PREPARACIÓN
+-- 11. TABLA: PRODUCTOS INTERNOS DEL MENÚ CON ORDEN DE PREPARACIÓN (3FN)
 CREATE TABLE menu_internal_products (
     id VARCHAR(50) PRIMARY KEY,
     menu_item_id VARCHAR(50) NOT NULL REFERENCES menu_items(id) ON DELETE CASCADE,
     product_id VARCHAR(50) NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
-    product_name VARCHAR(150) NOT NULL,
-    preparation_order INT NOT NULL DEFAULT 1
+    preparation_order INT NOT NULL DEFAULT 1,
+    is_required BOOLEAN DEFAULT TRUE,
+    CONSTRAINT uq_menu_order UNIQUE (menu_item_id, preparation_order)
 );
 
--- 8. TABLA: MODIFICADORES Y SUSTITUCIONES DE PRODUCTOS INTERNOS
+-- 12. TABLA: MODIFICADORES Y SUSTITUCIONES DE PRODUCTOS INTERNOS
 CREATE TABLE internal_product_modifiers (
     id VARCHAR(50) PRIMARY KEY,
     internal_product_id VARCHAR(50) NOT NULL REFERENCES menu_internal_products(id) ON DELETE CASCADE,
     name VARCHAR(120) NOT NULL,
+    substitute_product_id VARCHAR(50) REFERENCES products(id),
     price_delta NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
     is_default BOOLEAN DEFAULT FALSE
 );
 
--- 9. TABLA: COMANDAS / ÓRDENES ACTIVAS
+-- 13. TABLA: COMANDAS / ÓRDENES ACTIVAS (3FN)
 CREATE TABLE orders (
     id VARCHAR(50) PRIMARY KEY,
-    order_number INT NOT NULL,
-    channel VARCHAR(30) NOT NULL REFERENCES sales_channels(id),
+    order_number INT NOT NULL UNIQUE,
+    channel_id VARCHAR(30) NOT NULL REFERENCES sales_channels(id),
     platform_name VARCHAR(50),
     table_id VARCHAR(50) REFERENCES restaurant_tables(id) ON DELETE SET NULL,
-    table_number INT,
-    salon_name VARCHAR(100),
-    status VARCHAR(30) NOT NULL DEFAULT 'abierta', -- 'abierta', 'en_cocina', 'lista_para_servir', 'en_precuenta', 'cobrada'
+    status VARCHAR(30) NOT NULL DEFAULT 'abierta',
     waiter_id VARCHAR(50) NOT NULL REFERENCES users(id),
-    waiter_name VARCHAR(120) NOT NULL,
     subtotal NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
     discount_percentage NUMERIC(5, 2) DEFAULT 0.00,
     discount_amount NUMERIC(10, 2) DEFAULT 0.00,
-    discount_authorized_by VARCHAR(120),
+    discount_authorized_by_id VARCHAR(50) REFERENCES users(id),
     tax_amount NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
     total NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
     notes TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 10. TABLA: DETALLE DE COMANDA (ITEMS EN KDS)
+-- 14. TABLA: DETALLE DE COMANDA (ITEMS EN KDS)
 CREATE TABLE order_items (
     id VARCHAR(50) PRIMARY KEY,
     order_id VARCHAR(50) NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
     menu_item_id VARCHAR(50) NOT NULL REFERENCES menu_items(id),
-    name VARCHAR(150) NOT NULL,
-    sku VARCHAR(50) NOT NULL,
+    station_id VARCHAR(30) NOT NULL REFERENCES kitchen_stations(id),
     unit_price NUMERIC(10, 2) NOT NULL,
     quantity INT NOT NULL DEFAULT 1,
     subtotal NUMERIC(10, 2) NOT NULL,
-    station VARCHAR(30) NOT NULL, -- 'parrilla', 'barra', 'freidora', 'pase'
     status VARCHAR(30) NOT NULL DEFAULT 'en_cola', -- 'en_cola', 'preparando', 'listo', 'entregado'
     notes TEXT
 );
 
--- 11. TABLA: HISTORIAL DE FACTURAS EMITIDAS (ENCABEZADO HISTÓRICO)
+-- 15. TABLA: HISTORIAL DE FACTURAS EMITIDAS (SNAPSHOT FISCAL INMUTABLE)
 CREATE TABLE historical_invoices (
     id VARCHAR(50) PRIMARY KEY,
-    document_number VARCHAR(50) NOT NULL UNIQUE, -- ej: FAC-2026-000101
+    document_number VARCHAR(50) NOT NULL UNIQUE,
     ticket_number INT NOT NULL,
-    date_time_str VARCHAR(50) NOT NULL,
     iso_date TIMESTAMP WITH TIME ZONE NOT NULL,
     cashier_id VARCHAR(50) NOT NULL REFERENCES users(id),
-    cashier_name VARCHAR(120) NOT NULL,
-    sales_channel VARCHAR(30) NOT NULL,
-    sales_channel_label VARCHAR(150) NOT NULL,
-    table_number INT,
+    cashier_name_snapshot VARCHAR(120) NOT NULL,
+    waiter_name_snapshot VARCHAR(120),
+    sales_channel_id VARCHAR(30) NOT NULL REFERENCES sales_channels(id),
+    sales_channel_label_snapshot VARCHAR(150) NOT NULL,
+    table_id VARCHAR(50) REFERENCES restaurant_tables(id) ON DELETE SET NULL,
     subtotal NUMERIC(10, 2) NOT NULL,
     tax_amount NUMERIC(10, 2) NOT NULL,
     total_amount NUMERIC(10, 2) NOT NULL,
@@ -447,38 +477,44 @@ CREATE TABLE historical_invoices (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 12. TABLA: DETALLE DE FACTURA HISTÓRICA CON PRODUCTOS INTERNOS
+-- 16. TABLA: DETALLE DE FACTURA HISTÓRICA CON PRODUCTOS INTERNOS
 CREATE TABLE historical_invoice_items (
     id VARCHAR(50) PRIMARY KEY,
     invoice_id VARCHAR(50) NOT NULL REFERENCES historical_invoices(id) ON DELETE CASCADE,
-    name VARCHAR(150) NOT NULL,
+    menu_item_id VARCHAR(50) NOT NULL REFERENCES menu_items(id),
+    item_name_snapshot VARCHAR(150) NOT NULL,
     quantity INT NOT NULL,
     unit_price NUMERIC(10, 2) NOT NULL,
     subtotal NUMERIC(10, 2) NOT NULL
 );
 
-CREATE TABLE historical_invoice_internal_products (
-    id SERIAL PRIMARY KEY,
-    invoice_item_id VARCHAR(50) NOT NULL REFERENCES historical_invoice_items(id) ON DELETE CASCADE,
-    product_name VARCHAR(150) NOT NULL,
-    preparation_order INT NOT NULL,
-    preparation_type VARCHAR(30) NOT NULL,
-    selected_option_name VARCHAR(150) NOT NULL,
-    price_delta NUMERIC(10, 2) NOT NULL DEFAULT 0.00
-);
-
--- 13. TABLA: TURNOS Y CORTES DE CAJA
+-- 17. TABLA: TURNOS Y CORTES DE CAJA (3FN)
 CREATE TABLE cash_shifts (
     id VARCHAR(50) PRIMARY KEY,
-    opened_at VARCHAR(50) NOT NULL,
-    closed_at VARCHAR(50),
+    opened_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    closed_at TIMESTAMP WITH TIME ZONE,
     cashier_id VARCHAR(50) NOT NULL REFERENCES users(id),
-    cashier_name VARCHAR(120) NOT NULL,
     initial_cash NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
     total_sales NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
     expected_cash_in_drawer NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
     status VARCHAR(20) NOT NULL DEFAULT 'abierto'
-);`;
+);
+
+-- 18. VISTAS NORMALIZADAS (JOINs AUTOMÁTICOS)
+CREATE OR REPLACE VIEW v_restaurant_tables AS
+SELECT t.id, t.number, s.name AS salon_name, t.seats, t.status, u.name AS waiter_name
+FROM restaurant_tables t
+JOIN salons s ON t.salon_id = s.id
+LEFT JOIN users u ON t.waiter_id = u.id;
+
+CREATE OR REPLACE VIEW v_active_orders AS
+SELECT o.id, o.order_number, c.name AS channel_name, t.number AS table_number, s.name AS salon_name,
+       o.status, u.name AS waiter_name, o.subtotal, o.tax_amount, o.total
+FROM orders o
+JOIN sales_channels c ON o.channel_id = c.id
+LEFT JOIN restaurant_tables t ON o.table_id = t.id
+LEFT JOIN salons s ON t.salon_id = s.id
+JOIN users u ON o.waiter_id = u.id;`;
 
   const sqlSeedSnippet = `-- ============================================================================
 -- RESTO-XYZ: DATOS DE PRUEBA (SEED DATA - POSTGRESQL)
