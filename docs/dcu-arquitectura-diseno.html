@@ -264,11 +264,11 @@
 
         <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
           <div class="font-bold text-slate-900 text-sm flex items-center justify-between">
-            <span>menu_items & products</span>
-            <span class="text-[10px] bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded font-mono">N : M</span>
+            <span>menu_items & products (Vía Puente)</span>
+            <span class="text-[10px] bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded font-mono">2 × (1 : N)</span>
           </div>
           <p class="text-slate-600">
-            <strong>Tabla intermedia:</strong> <code>menu_internal_products</code> vincula el combo de venta con sus insumos o productos base con orden de preparación.
+            <strong>Tabla intermedia:</strong> <code>menu_internal_products</code> descompone la relación conceptual en dos relaciones estrictamente <strong>1 : N</strong> (<code>menu_items 1:N</code> y <code>products 1:N</code>). No existe ningún enlace directo N:M en el motor relacional.
           </p>
         </div>
       </div>
