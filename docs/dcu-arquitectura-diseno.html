@@ -211,6 +211,69 @@
       </div>
     </section>
 
+    <!-- BLOQUE: DIAGRAMA RELACIONAL DE BASE DE DATOS (ERD) -->
+    <section id="diagrama-bd" class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+      <div class="border-b border-slate-200 pb-5 mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-emerald-600">Modelo Físico y Relacional</span>
+          <h3 class="text-2xl font-bold text-slate-900">Diagrama Entidad-Relación (ERD) · PostgreSQL</h3>
+          <p class="text-slate-600 text-sm mt-1">
+            Visualización arquitectónica de tablas maestras, llaves primarias (PK), foráneas (FK), campos y cardinalidades del sistema RestoXYZ.
+          </p>
+        </div>
+        <span class="text-xs font-mono px-3 py-1 rounded bg-slate-900 text-emerald-400 border border-slate-800">
+          PostgreSQL 16 · Schema DDL
+        </span>
+      </div>
+
+      <!-- IMAGEN DEL DIAGRAMA GENERADA -->
+      <div class="rounded-xl overflow-hidden border border-slate-300 shadow-md mb-6 bg-slate-950">
+        <img 
+          src="images/database_erd_diagram.jpg" 
+          alt="Diagrama Entidad-Relación de la Base de Datos RestoXYZ POS" 
+          class="w-full h-auto object-contain"
+          referrerPolicy="no-referrer"
+        />
+      </div>
+
+      <!-- DESGLOSE DE TABLAS Y RELACIONES -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
+          <div class="font-bold text-slate-900 text-sm flex items-center justify-between">
+            <span>users & restaurant_tables</span>
+            <span class="text-[10px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded font-mono">1 : N</span>
+          </div>
+          <p class="text-slate-600">
+            <strong>PK:</strong> <code>user_id</code> (VARCHAR).<br>
+            <strong>FK:</strong> <code>restaurant_tables.waiter_id</code> referencia a <code>users.id</code>.<br>
+            Un mesero puede atender múltiples mesas concurrentes durante su turno.
+          </p>
+        </div>
+
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
+          <div class="font-bold text-slate-900 text-sm flex items-center justify-between">
+            <span>orders & order_items</span>
+            <span class="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-mono">1 : N</span>
+          </div>
+          <p class="text-slate-600">
+            <strong>PK:</strong> <code>order_id</code> (VARCHAR), <code>order_item_id</code> (VARCHAR).<br>
+            <strong>FK:</strong> <code>order_items.order_id</code> referencia a <code>orders.id</code> con borrado en cascada.<br>
+            Cada orden agrupa múltiples líneas de menú y modificadores.
+          </p>
+        </div>
+
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
+          <div class="font-bold text-slate-900 text-sm flex items-center justify-between">
+            <span>menu_items & products</span>
+            <span class="text-[10px] bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded font-mono">N : M</span>
+          </div>
+          <p class="text-slate-600">
+            <strong>Tabla intermedia:</strong> <code>menu_internal_products</code> vincula el combo de venta con sus insumos o productos base con orden de preparación.
+          </p>
+        </div>
+      </div>
+    </section>
+
     <!-- BLOQUE 2: PROFUNDIDAD DE NIVELES (CLICK DEPTH) -->
     <section id="profundidad-clics" class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
       <div class="border-b border-slate-200 pb-5 mb-6">
