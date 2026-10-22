@@ -14,6 +14,7 @@ import {
 export const SprintAndDevOpsHub: React.FC = () => {
   const { sprintStories, showToast } = useRestaurant();
   const [activeTab, setActiveTab] = useState<'sprint' | 'docker' | 'nginx' | 's3' | 'cicd' | 'backend' | 'schema'>('sprint');
+  const [schemaSubTab, setSchemaSubTab] = useState<'ddl' | 'seed'>('ddl');
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   const copyToClipboard = (text: string, key: string) => {
@@ -479,6 +480,124 @@ CREATE TABLE cash_shifts (
     status VARCHAR(20) NOT NULL DEFAULT 'abierto'
 );`;
 
+  const sqlSeedSnippet = `-- ============================================================================
+-- RESTO-XYZ: DATOS DE PRUEBA (SEED DATA - POSTGRESQL)
+-- ============================================================================
+
+BEGIN;
+
+-- 1. ROLES Y PERFILES
+INSERT INTO role_profiles (id, name, description, role_key, can_apply_discounts, can_cancel_orders, can_open_cash_shift, can_close_cash_shift, can_view_audit_logs, can_configure_catalog, can_manage_users, can_reopen_table)
+VALUES
+('role-admin', 'Administrador General', 'Control total del sistema', 'administrador', true, true, true, true, true, true, true, true),
+('role-gerente', 'Gerente de Sucursal', 'Supervisión operativa y autorizaciones', 'gerente', true, true, true, true, true, false, false, true),
+('role-cajero', 'Cajero Principal', 'Operación de caja y cobros omnicanal', 'cajero', false, false, true, true, false, false, false, false),
+('role-mesero', 'Mesero / Salonero', 'Atención en salón y comandeo', 'mesero', false, false, false, false, false, false, false, false),
+('role-chef', 'Jefe de Cocina (Chef)', 'Monitor KDS y despacho por estaciones', 'chef', false, false, false, false, false, false, false, false)
+ON CONFLICT (id) DO NOTHING;
+
+-- 2. USUARIOS
+INSERT INTO users (id, name, role, pin, device, avatar, is_active)
+VALUES
+('u1', 'Carlos Mendoza', 'administrador', '1234', 'all_in_one', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150', true),
+('u2', 'Valeria Rojas', 'cajero', '2222', 'all_in_one', 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150', true),
+('u3', 'Mateo Silveira', 'mesero', '3333', 'tablet', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150', true),
+('u4', 'Chef Rodrigo Paz', 'chef', '4444', 'kds_monitor', 'https://images.unsplash.com/photo-1577219491135-ce391730fb2c?w=150', true),
+('u5', 'Lucía Fernández', 'gerente', '5555', 'all_in_one', 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- 3. CANALES DE VENTA
+INSERT INTO sales_channels (id, name, code, description, is_active, default_price_mode, default_delta)
+VALUES
+('mesa', 'Salón / Mesa', 'MESA', 'Consumo presencial en salones', true, 'base', 0.00),
+('llevar', 'Para Llevar (Take Out)', 'LLEVAR', 'Venta en mostrador para retiro', true, 'delta', -0.50),
+('delivery', 'Delivery Online', 'DELIVERY', 'Plataformas Uber Eats, Glovo y Rappi', true, 'delta', 1.80)
+ON CONFLICT (id) DO NOTHING;
+
+-- 4. MESAS Y SALONES
+INSERT INTO restaurant_tables (id, number, salon_id, salon_name, seats, status, waiter_id, waiter_name, opened_at)
+VALUES
+('tab-1', 1, 'salon-1', 'Salón Principal', 4, 'ocupada', 'u3', 'Mateo Silveira', CURRENT_TIMESTAMP - INTERVAL '45 minutes'),
+('tab-2', 2, 'salon-1', 'Salón Principal', 2, 'disponible', NULL, NULL, NULL),
+('tab-3', 3, 'salon-1', 'Salón Principal', 6, 'ocupada', 'u3', 'Mateo Silveira', CURRENT_TIMESTAMP - INTERVAL '25 minutes'),
+('tab-4', 4, 'salon-1', 'Salón Principal', 4, 'limpieza', NULL, NULL, NULL),
+('tab-5', 5, 'salon-2', 'Terraza Exterior', 4, 'disponible', NULL, NULL, NULL)
+ON CONFLICT (id) DO NOTHING;
+
+-- 5. PRODUCTOS BASE (CATÁLOGO MAESTRO: COCINA INTERNA VS ARMADO)
+INSERT INTO products (id, sku, name, description, category, cost, preparation_type, station, is_active)
+VALUES
+('prod-angus', 'INS-001', 'Carne Angus 200g', 'Medallón 100% Angus certificada', 'Carnes', 3.20, 'cocina_interna', 'parrilla', true),
+('prod-brioche', 'INS-002', 'Pan Brioche Artesanal', 'Pan horneado diariamente con mantequilla', 'Panadería', 0.45, 'armado_menu', 'pase', true),
+('prod-cheddar', 'INS-003', 'Queso Cheddar Fundido', 'Láminas de cheddar madurado', 'Lácteos', 0.60, 'armado_menu', 'pase', true),
+('prod-tocino', 'INS-004', 'Tocino Crujiente Ahumado', 'Tiras de tocino ahumado a la plancha', 'Carnes', 0.85, 'cocina_interna', 'parrilla', true),
+('prod-papas', 'INS-005', 'Papas Rústicas Corte Grueso', 'Papas con romero y sal marina', 'Guarniciones', 0.70, 'cocina_interna', 'freidora', true),
+('prod-costillas', 'INS-009', 'Costillas BBQ St. Louis 500g', 'Costillar cocido a baja temperatura 8h', 'Carnes', 6.50, 'cocina_interna', 'parrilla', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- 6. MENÚS Y COMBOS DE VENTA (MENU ITEMS)
+INSERT INTO menu_items (id, sku, name, category, base_price, image_url, description, allow_discounts, station, is_active)
+VALUES
+('m1', 'MENU-001', 'Hamburguesa Clásica Angus', 'hamburguesas', 12.50, 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500', 'Carne Angus 200g, pan brioche, cheddar fundido y papas rústicas.', true, 'parrilla', true),
+('m2', 'MENU-002', 'Doble Bacon Cheddar Burger', 'hamburguesas', 15.00, 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=500', 'Doble carne Angus, extra tocino, queso cheddar y papas fritas.', true, 'parrilla', true),
+('m3', 'MENU-003', 'Costillas BBQ Ahumadas', 'cenas', 19.50, 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500', 'Medio costillar glaseado con salsa BBQ de la casa.', true, 'parrilla', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- 7. PRODUCTOS INTERNOS DEL MENÚ CON ORDEN DE PREPARACIÓN
+INSERT INTO menu_internal_products (id, menu_item_id, product_id, product_name, preparation_order)
+VALUES
+('mip-1', 'm1', 'prod-angus', 'Medallón Angus 200g', 1),
+('mip-2', 'm1', 'prod-brioche', 'Pan Brioche Tostado', 2),
+('mip-3', 'm1', 'prod-cheddar', 'Queso Cheddar Fundido', 3),
+('mip-4', 'm1', 'prod-papas', 'Porción Papas Rústicas', 4)
+ON CONFLICT (id) DO NOTHING;
+
+-- 8. MODIFICADORES Y SUSTITUCIONES INTERNAS
+INSERT INTO internal_product_modifiers (id, internal_product_id, name, price_delta, is_default)
+VALUES
+('mod-1', 'mip-1', 'Término Medio (3/4)', 0.00, true),
+('mod-2', 'mip-1', 'Bien Cocida', 0.00, false),
+('mod-4', 'mip-3', 'Cheddar Clásico', 0.00, true),
+('mod-5', 'mip-3', 'Queso Suizo / Emmental', 0.80, false),
+('mod-6', 'mip-4', 'Papas Rústicas Estándar', 0.00, true),
+('mod-7', 'mip-4', 'Cambiar por Aros de Cebolla', 1.20, false)
+ON CONFLICT (id) DO NOTHING;
+
+-- 9. COMANDAS ACTIVAS EN CURSO
+INSERT INTO orders (id, order_number, channel, table_id, table_number, salon_name, status, waiter_id, waiter_name, subtotal, tax_amount, total, notes)
+VALUES
+('ord-101', 101, 'mesa', 'tab-1', 1, 'Salón Principal', 'en_cocina', 'u3', 'Mateo Silveira', 27.50, 2.75, 30.25, 'Carne a término medio.'),
+('ord-102', 102, 'mesa', 'tab-3', 3, 'Salón Principal', 'lista_para_servir', 'u3', 'Mateo Silveira', 39.00, 3.90, 42.90, 'Servicio rápido.')
+ON CONFLICT (id) DO NOTHING;
+
+-- 10. FACTURAS HISTÓRICAS EMITIDAS
+INSERT INTO historical_invoices (id, document_number, ticket_number, date_time_str, iso_date, cashier_id, cashier_name, waiter_name, sales_channel, sales_channel_label, table_number, salon_name, subtotal, tax_amount, total_amount, total_charged, change_given, payment_method)
+VALUES
+('inv-1001', 'FAC-2026-000098', 98, '18/10/2026 13:45:12', '2026-10-18T13:45:12Z', 'u2', 'Valeria Rojas', 'Mateo Silveira', 'mesa', 'Mesa #4 (Salón Principal)', 4, 'Salón Principal', 33.50, 3.35, 36.85, 40.00, 3.15, 'Efectivo')
+ON CONFLICT (id) DO NOTHING;
+
+-- 11. DETALLE DE PRODUCTOS FACTURADOS
+INSERT INTO historical_invoice_items (id, invoice_id, menu_item_id, name, sku, category, quantity, base_price, unit_price, subtotal, allow_discounts)
+VALUES
+('inv-item-1', 'inv-1001', 'm1', 'Hamburguesa Clásica Angus', 'MENU-001', 'hamburguesas', 2, 12.50, 12.50, 25.00, true)
+ON CONFLICT (id) DO NOTHING;
+
+-- 12. SUB-DETALLE DE PRODUCTOS INTERNOS FACTURADOS
+INSERT INTO historical_invoice_internal_products (invoice_item_id, product_id, product_name, preparation_order, preparation_type, station, selected_option_name, price_delta)
+VALUES
+('inv-item-1', 'prod-angus', 'Medallón Angus 200g', 1, 'cocina_interna', 'parrilla', 'Término Medio (3/4)', 0.00),
+('inv-item-1', 'prod-brioche', 'Pan Brioche Tostado', 2, 'armado_menu', 'pase', 'Pan Brioche Clásico', 0.00),
+('inv-item-1', 'prod-cheddar', 'Queso Cheddar', 3, 'armado_menu', 'pase', 'Cheddar Fundido', 0.00),
+('inv-item-1', 'prod-papas', 'Porción Papas Rústicas', 4, 'cocina_interna', 'freidora', 'Papas Rústicas Estándar', 0.00);
+
+-- 13. TURNO DE CAJA
+INSERT INTO cash_shifts (id, opened_at, cashier_id, cashier_name, initial_cash, cash_sales, total_sales, expected_cash_in_drawer, status)
+VALUES
+('shift-current', '18/10/2026 08:00:00', 'u2', 'Valeria Rojas', 150.00, 56.85, 85.58, 206.85, 'abierto')
+ON CONFLICT (id) DO NOTHING;
+
+COMMIT;`;
+
   return (
     <div className="flex-1 bg-slate-50 flex flex-col p-3 sm:p-6 select-none font-sans overflow-y-auto">
       {/* Top Header */}
@@ -795,25 +914,68 @@ CREATE TABLE cash_shifts (
 
       {activeTab === 'schema' && (
         <div className="mt-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="text-xs font-mono font-bold text-indigo-800 uppercase block">
-                database/schema.sql (Esquema Relacional PostgreSQL / DDL)
-              </span>
-              <span className="text-[11px] text-slate-500">
-                18 Tablas con claves primarias, foráneas, índices KDS y facturación histórica
-              </span>
+          {/* Sub-tabs: DDL vs Seed Data */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setSchemaSubTab('ddl')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                  schemaSubTab === 'ddl'
+                    ? 'bg-indigo-600 text-white shadow-xs'
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                }`}
+              >
+                1. Esquema DDL (database/schema.sql)
+              </button>
+              <button
+                type="button"
+                onClick={() => setSchemaSubTab('seed')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                  schemaSubTab === 'seed'
+                    ? 'bg-emerald-600 text-white shadow-xs'
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                }`}
+              >
+                2. Datos de Prueba (database/seed.sql)
+              </button>
             </div>
+
             <button
-              onClick={() => copyToClipboard(sqlSchemaSnippet, 'schema')}
+              onClick={() =>
+                copyToClipboard(
+                  schemaSubTab === 'ddl' ? sqlSchemaSnippet : sqlSeedSnippet,
+                  schemaSubTab === 'ddl' ? 'schema_ddl' : 'schema_seed'
+                )
+              }
               className="px-3 py-1.5 bg-white hover:bg-slate-100 border border-slate-300 text-slate-800 rounded-lg text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
             >
-              {copiedKey === 'schema' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-              <span>{copiedKey === 'schema' ? 'Copiado' : 'Copiar Esquema SQL'}</span>
+              {(schemaSubTab === 'ddl' && copiedKey === 'schema_ddl') ||
+              (schemaSubTab === 'seed' && copiedKey === 'schema_seed') ? (
+                <Check className="w-3.5 h-3.5 text-emerald-600" />
+              ) : (
+                <Copy className="w-3.5 h-3.5" />
+              )}
+              <span>
+                {schemaSubTab === 'ddl'
+                  ? copiedKey === 'schema_ddl'
+                    ? 'Copiado'
+                    : 'Copiar Esquema DDL'
+                  : copiedKey === 'schema_seed'
+                  ? 'Copiado'
+                  : 'Copiar Datos de Prueba (Seed)'}
+              </span>
             </button>
           </div>
+
+          <div className="text-xs text-slate-600 font-mono">
+            {schemaSubTab === 'ddl'
+              ? '📄 Script DDL de creación de tablas, llaves primarias, foráneas e índices (PostgreSQL / Relacional).'
+              : '🌱 Script de inserción con registros iniciales de prueba (roles, usuarios, catálogo, órdenes, facturas históricas y caja).'}
+          </div>
+
           <pre className="p-4 bg-slate-900 border border-slate-800 rounded-2xl text-xs font-mono text-slate-200 overflow-x-auto leading-relaxed shadow-sm max-h-[600px]">
-            {sqlSchemaSnippet}
+            {schemaSubTab === 'ddl' ? sqlSchemaSnippet : sqlSeedSnippet}
           </pre>
         </div>
       )}

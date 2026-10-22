@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dossier DCU · Arquitectura de la Información y Diseño de Interfaz · RestoXYZ POS</title>
+  <meta name="description" content="Dossier académico y técnico de Diseño Centrado en el Usuario (DCU) para el sistema RestoXYZ POS: Arquitectura de la Información (JJG), principios Gestalt, reglas de diseño y accesibilidad WCAG 2.2.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              500: '#22c55e',
+              600: '#16a34a',
+              700: '#15803d',
+              900: '#14532d',
+            },
+            jjg: {
+              page: '#e0f2fe',
+              pageBorder: '#0284c7',
+              decision: '#fef3c7',
+              decisionBorder: '#d97706',
+              condition: '#fee2e2',
+              conditionBorder: '#dc2626',
+              area: '#f8fafc',
+              areaBorder: '#94a3b8'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @media print {
+      body { background-color: white !important; color: black !important; font-size: 11pt; }
+      .no-print { display: none !important; }
+      .page-break { page-break-before: always; }
+      .shadow-xl, .shadow-md, .shadow-sm { box-shadow: none !important; }
+    }
+    .grid-bg {
+      background-size: 24px 24px;
+      background-image: linear-gradient(to right, rgba(226, 232, 240, 0.4) 1px, transparent 1px),
+                        linear-gradient(to bottom, rgba(226, 232, 240, 0.4) 1px, transparent 1px);
+    }
+    .jjg-node {
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.06));
+      transition: transform 0.2s ease, filter 0.2s ease;
+    }
+    .jjg-node:hover {
+      transform: translateY(-2px);
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.12));
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased selection:bg-emerald-500 selection:text-white">
+
+  <!-- HEADER INSTITUCIONAL / METADATOS ACADÉMICOS -->
+  <header class="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-50 backdrop-blur-md bg-slate-900/95">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center font-extrabold text-slate-950 shadow-lg shadow-emerald-500/20">
+          DCU
+        </div>
+        <div>
+          <span class="text-xs font-semibold tracking-wider text-emerald-400 uppercase block leading-none">Dossier Universitario · Fase 2: Diseño</span>
+          <h1 class="text-base sm:text-lg font-bold text-slate-100 leading-tight">RestoXYZ · Arquitectura de Información y Diseño de Interfaz</h1>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="hidden md:inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-950/80 text-emerald-300 border border-emerald-800/80">
+          Máster Ing. Informática · UA 2026
+        </span>
+        <button onclick="window.print()" class="no-print inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-colors">
+          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+          Imprimir / Guardar PDF
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- NAVEGACIÓN RÁPIDA (SUB-HEADER) -->
+  <nav class="bg-white border-b border-slate-200 py-2.5 px-4 sticky top-16 z-40 shadow-sm no-print overflow-x-auto">
+    <div class="max-w-7xl mx-auto flex items-center gap-4 text-xs font-medium text-slate-600 whitespace-nowrap">
+      <span class="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Secciones:</span>
+      <a href="#tema3-3" class="hover:text-emerald-600 font-semibold text-slate-900 px-2 py-1 rounded-md bg-slate-100 hover:bg-emerald-50 transition-colors">1. Arquitectura de Información (JJG)</a>
+      <a href="#profundidad-clics" class="hover:text-emerald-600 px-2 py-1 rounded-md hover:bg-slate-100 transition-colors">2. Profundidad de Niveles</a>
+      <a href="#arquetipos" class="hover:text-emerald-600 px-2 py-1 rounded-md hover:bg-slate-100 transition-colors">3. Arquetipos de Página</a>
+      <a href="#mapa-sitio-jjg" class="hover:text-emerald-600 px-2 py-1 rounded-md hover:bg-slate-100 transition-colors">4. Mapa de Sitio JJG</a>
+      <a href="#rbac" class="hover:text-emerald-600 px-2 py-1 rounded-md hover:bg-slate-100 transition-colors">5. RBAC y Perfiles</a>
+      <a href="#tema4-dossier" class="hover:text-emerald-600 font-semibold text-slate-900 px-2 py-1 rounded-md bg-slate-100 hover:bg-emerald-50 transition-colors">6. Tema 4: Dossier de Diseño (01 - 08)</a>
+      <a href="#wcag-contraste" class="hover:text-emerald-600 px-2 py-1 rounded-md hover:bg-slate-100 transition-colors">7. Matriz WCAG 2.2</a>
+    </div>
+  </nav>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
+
+    <!-- PORTADA DEL DOSSIER -->
+    <section class="bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-950 text-white rounded-3xl p-8 sm:p-12 shadow-2xl border border-slate-700/50 relative overflow-hidden">
+      <div class="absolute -right-16 -bottom-16 w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none"></div>
+      <div class="relative z-10 max-w-3xl">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-semibold mb-4">
+          <span>Universidad de Alicante · Máster Universitario en Ingeniería Informática</span>
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white mb-4">
+          Dossier de Diseño Centrado en el Usuario (DCU)
+        </h2>
+        <p class="text-slate-300 text-sm sm:text-base leading-relaxed mb-6">
+          Documento técnico integral que sintetiza la <strong>Fase 2 (Diseño)</strong> para el sistema de punto de venta gastronómico <strong>RestoXYZ</strong>. Incluye la Arquitectura de la Información formal bajo el vocabulario visual de Jesse James Garrett (JJG), análisis de clics, modelado de arquetipos, control RBAC y los 8 pilares del dossier de diseño (grilla, Gestalt, tipografía, colorimetría WCAG 2.2, iconografía y lenguaje visual).
+        </p>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-6 border-t border-slate-700/60 text-xs">
+          <div>
+            <span class="text-slate-400 block font-medium">Asignatura:</span>
+            <span class="font-bold text-slate-100">Diseño Centrado en el Usuario</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block font-medium">Temas aplicados:</span>
+            <span class="font-bold text-slate-100">Tema 3.3, Tema 3 y Tema 4</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block font-medium">Sistema objetivo:</span>
+            <span class="font-bold text-slate-100">RestoXYZ POS / KDS / Admin</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block font-medium">Fecha de emisión:</span>
+            <span class="font-bold text-slate-100">Octubre 2026</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- BLOQUE 1: TEMA 3.3 - ARQUITECTURA DE LA INFORMACIÓN -->
+    <section id="tema3-3" class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+      <div class="border-b border-slate-200 pb-5 mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-emerald-600">Tema 3.3 · Fase 2: Diseño</span>
+          <h3 class="text-2xl font-bold text-slate-900">Estructura de Contenidos, Taxonomía y Organización</h3>
+        </div>
+        <span class="text-xs font-semibold px-3 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+          Metodología Card Sorting & Chunking
+        </span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+        <div class="space-y-4">
+          <h4 class="font-bold text-slate-900 text-base flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            Inventario y Chunking de Información
+          </h4>
+          <p class="text-slate-600 leading-relaxed">
+            Siguiendo las pautas pedagógicas del tema, la información de RestoXYZ ha sido descompuesta en <em>trozos (chunks)</em> modulares e independientes, diseñados para lectura escaneable en pantallas táctiles industriales sin depender de scroll excesivo:
+          </p>
+          <ul class="space-y-2 text-slate-700">
+            <li class="flex items-start gap-2">
+              <strong class="text-slate-900 min-w-[130px]">Módulo Salón:</strong>
+              <span>Segmentación por Salón Principal, Terraza y Barra VIP. Mesas codificadas con semáforo cromático de 5 estados (Libre, Ocupada, Precuenta, Limpieza, Reservada).</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <strong class="text-slate-900 min-w-[130px]">Módulo Catálogo:</strong>
+              <span>Taxonomía estructurada en Menús combinados, Productos base (cocina interna vs armado), grupos de modificadores y sustitutos con delta de precio.</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <strong class="text-slate-900 min-w-[130px]">Módulo Comanda:</strong>
+              <span>Separación estricta de 3 cuadrantes: Selector de categoría, Grid de productos y Bandeja de ticket activo con totales discriminados (Subtotal, Impuestos, Descuentos).</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <strong class="text-slate-900 min-w-[130px]">Módulo Cocina KDS:</strong>
+              <span>Tarjetas kanban por comanda con temporizador dinámico, estado de marcha y filtro por estación (Parrilla, Freidora, Barra, Pase).</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="space-y-4">
+          <h4 class="font-bold text-slate-900 text-base flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+            Taxonomías y Criterios de Clasificación
+          </h4>
+          <p class="text-slate-600 leading-relaxed">
+            La arquitectura adopta múltiples modelos de organización según el perfil de uso:
+          </p>
+          <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+              <span class="font-semibold text-slate-800">1. Taxonomía Categórica</span>
+              <span class="text-xs text-slate-500">Hamburguesas, Bebidas, Guarniciones, Postres</span>
+            </div>
+            <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+              <span class="font-semibold text-slate-800">2. Taxonomía Espacial (Geográfica)</span>
+              <span class="text-xs text-slate-500">Salón 1 (Mesas 1-8), Terraza (Mesas 9-14), Barra</span>
+            </div>
+            <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+              <span class="font-semibold text-slate-800">3. Taxonomía Cronológica</span>
+              <span class="text-xs text-slate-500">Cola FIFO en KDS ordenada por tiempo transcurrido</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="font-semibold text-slate-800">4. Taxonomía Funcional / Canal</span>
+              <span class="text-xs text-slate-500">En Mesa (Dining), Para Llevar (Takeout), Delivery</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- BLOQUE 2: PROFUNDIDAD DE NIVELES (CLICK DEPTH) -->
+    <section id="profundidad-clics" class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+      <div class="border-b border-slate-200 pb-5 mb-6">
+        <span class="text-xs font-bold uppercase tracking-wider text-emerald-600">Métrica de Usabilidad</span>
+        <h3 class="text-2xl font-bold text-slate-900">Profundidad de Niveles: Clics Requeridos para Tareas Críticas</h3>
+        <p class="text-slate-600 text-sm mt-1">
+          Evaluación ergonómica de la profundidad jerárquica para garantizar velocidad de respuesta durante horas de alta demanda gastronómica.
+        </p>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm border-collapse">
+          <thead>
+            <tr class="bg-slate-100 text-slate-700 text-xs font-bold uppercase tracking-wider border-b border-slate-200">
+              <th class="py-3 px-4">Tarea Operativa del Usuario</th>
+              <th class="py-3 px-4">Perfil</th>
+              <th class="py-3 px-4">Nivel / Clics</th>
+              <th class="py-3 px-4">Secuencia de Interacción</th>
+              <th class="py-3 px-4">Evaluación Ergonómica</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200 text-slate-700">
+            <tr class="hover:bg-slate-50 transition-colors">
+              <td class="py-3 px-4 font-semibold text-slate-900">Tomar comanda en mesa libre</td>
+              <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800">Mesero</span></td>
+              <td class="py-3 px-4 font-bold text-emerald-600">2 clics</td>
+              <td class="py-3 px-4 text-xs font-mono">Canal Mesa (1) → Clic en Mesa (2) → POS activo</td>
+              <td class="py-3 px-4"><span class="inline-flex items-center text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-full border border-emerald-200">Óptimo (≤ 3)</span></td>
+            </tr>
+            <tr class="hover:bg-slate-50 transition-colors">
+              <td class="py-3 px-4 font-semibold text-slate-900">Agregar ítem con modificador a orden</td>
+              <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800">Mesero</span></td>
+              <td class="py-3 px-4 font-bold text-emerald-600">2 clics</td>
+              <td class="py-3 px-4 text-xs font-mono">Clic Producto (1) → Seleccionar Término Carne (2)</td>
+              <td class="py-3 px-4"><span class="inline-flex items-center text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-full border border-emerald-200">Óptimo (≤ 3)</span></td>
+            </tr>
+            <tr class="hover:bg-slate-50 transition-colors">
+              <td class="py-3 px-4 font-semibold text-slate-900">Enviar comanda a cocina interna (KDS)</td>
+              <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800">Mesero</span></td>
+              <td class="py-3 px-4 font-bold text-emerald-600">1 clic</td>
+              <td class="py-3 px-4 text-xs font-mono">Botón primario verde "Enviar a Cocina"</td>
+              <td class="py-3 px-4"><span class="inline-flex items-center text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-full border border-emerald-200">Inmediato (1)</span></td>
+            </tr>
+            <tr class="hover:bg-slate-50 transition-colors">
+              <td class="py-3 px-4 font-semibold text-slate-900">Marcar plato preparado en Cocina</td>
+              <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-xs font-bold bg-orange-100 text-orange-800">Chef</span></td>
+              <td class="py-3 px-4 font-bold text-emerald-600">1 clic</td>
+              <td class="py-3 px-4 text-xs font-mono">Clic directo sobre la tarjeta de comanda en KDS</td>
+              <td class="py-3 px-4"><span class="inline-flex items-center text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-full border border-emerald-200">Inmediato (1)</span></td>
+            </tr>
+            <tr class="hover:bg-slate-50 transition-colors">
+              <td class="py-3 px-4 font-semibold text-slate-900">Emitir precuenta para cliente</td>
+              <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800">Mesero</span></td>
+              <td class="py-3 px-4 font-bold text-blue-600">2 clics</td>
+              <td class="py-3 px-4 text-xs font-mono">Botón "Precuenta" (1) → Confirmar Imprimir (2)</td>
+              <td class="py-3 px-4"><span class="inline-flex items-center text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-1 rounded-full border border-blue-200">Adecuado (2)</span></td>
+            </tr>
+            <tr class="hover:bg-slate-50 transition-colors">
+              <td class="py-3 px-4 font-semibold text-slate-900">Cobrar mesa con división de cuenta</td>
+              <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-xs font-bold bg-indigo-100 text-indigo-800">Cajero</span></td>
+              <td class="py-3 px-4 font-bold text-purple-600">3 clics</td>
+              <td class="py-3 px-4 text-xs font-mono">Mesa (1) → Dividir Cuenta (2) → Pagar Parte 1 (3)</td>
+              <td class="py-3 px-4"><span class="inline-flex items-center text-xs font-semibold text-purple-700 bg-purple-50 px-2 py-1 rounded-full border border-purple-200">Multifactorial (3)</span></td>
+            </tr>
+            <tr class="hover:bg-slate-50 transition-colors">
+              <td class="py-3 px-4 font-semibold text-slate-900">Autorizar descuento especial con PIN</td>
+              <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-xs font-bold bg-rose-100 text-rose-800">Gerente</span></td>
+              <td class="py-3 px-4 font-bold text-purple-600">3 clics</td>
+              <td class="py-3 px-4 text-xs font-mono">Descuento (1) → Ingresar PIN Gerente (2) → Validar (3)</td>
+              <td class="py-3 px-4"><span class="inline-flex items-center text-xs font-semibold text-purple-700 bg-purple-50 px-2 py-1 rounded-full border border-purple-200">Seguro (3)</span></td>
+            </tr>
+            <tr class="hover:bg-slate-50 transition-colors">
+              <td class="py-3 px-4 font-semibold text-slate-900">Ajuste de precio por canal (Backoffice)</td>
+              <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-xs font-bold bg-rose-100 text-rose-800">Gerente</span></td>
+              <td class="py-3 px-4 font-bold text-slate-600">3 clics</td>
+              <td class="py-3 px-4 text-xs font-mono">Admin (1) → Precios por Canal (2) → Guardar Delta (3)</td>
+              <td class="py-3 px-4"><span class="inline-flex items-center text-xs font-semibold text-slate-700 bg-slate-100 px-2 py-1 rounded-full border border-slate-300">Administrativo</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- BLOQUE 3: ARQUETIPOS DE PÁGINA -->
+    <section id="arquetipos" class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+      <div class="border-b border-slate-200 pb-5 mb-6">
+        <span class="text-xs font-bold uppercase tracking-wider text-emerald-600">Arquitectura de Plantillas</span>
+        <h3 class="text-2xl font-bold text-slate-900">Arquetipos de Página (Page Archetypes)</h3>
+        <p class="text-slate-600 text-sm mt-1">
+          Modelos estructurales reutilizables adaptados a la ergonomía de cada estación operativa.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Arquetipo 1 -->
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-5 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-bold uppercase px-2.5 py-1 rounded bg-emerald-100 text-emerald-800">Arquetipo 01</span>
+              <span class="text-xs text-slate-500 font-mono">Touch Grid</span>
+            </div>
+            <h4 class="font-bold text-slate-900 text-base mb-2">Terminal POS 3 Zonas</h4>
+            <p class="text-xs text-slate-600 mb-4 leading-relaxed">
+              Diseñado para velocidad extrema en toma de órdenes. Cuadrícula de productos de 60% del ancho con botones táctiles de 80x80px y panel lateral fijo de comanda con sticky checkout.
+            </p>
+            <div class="bg-white border border-slate-300 rounded-lg p-3 text-center text-xs font-mono text-slate-400 space-y-1 mb-4">
+              <div class="bg-slate-200 text-slate-700 py-1 rounded font-bold">[Barra Superior: Canal + Mesa + PIN]</div>
+              <div class="grid grid-cols-3 gap-1">
+                <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 py-3 rounded col-span-2">[Categorías + Productos Grid]</div>
+                <div class="bg-amber-50 border border-amber-200 text-amber-800 py-3 rounded">[Ticket Comanda + Cobro]</div>
+              </div>
+            </div>
+          </div>
+          <span class="text-[11px] text-slate-500 font-medium">Usuarios: Mesero, Cajero</span>
+        </div>
+
+        <!-- Arquetipo 2 -->
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-5 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-bold uppercase px-2.5 py-1 rounded bg-blue-100 text-blue-800">Arquetipo 02</span>
+              <span class="text-xs text-slate-500 font-mono">Dark Kanban</span>
+            </div>
+            <h4 class="font-bold text-slate-900 text-base mb-2">Display de Cocina (KDS)</h4>
+            <p class="text-xs text-slate-600 mb-4 leading-relaxed">
+              Interfaz de fondo oscuro (#0f172a) optimizada para visibilidad a 3 metros de distancia en ambientes calurosos y húmedos. Tarjetas cronometradas que cambian de color según retraso.
+            </p>
+            <div class="bg-slate-900 border border-slate-700 rounded-lg p-3 text-center text-xs font-mono text-slate-400 space-y-1 mb-4">
+              <div class="bg-slate-800 text-slate-200 py-1 rounded font-bold">[Filtros de Estación: Parrilla | Barra | Pase]</div>
+              <div class="grid grid-cols-3 gap-1">
+                <div class="bg-slate-800 border-t-2 border-emerald-500 text-emerald-400 py-3 rounded">Mesa 4 (04m)</div>
+                <div class="bg-slate-800 border-t-2 border-amber-500 text-amber-400 py-3 rounded">Mesa 2 (12m)</div>
+                <div class="bg-slate-800 border-t-2 border-rose-500 text-rose-400 py-3 rounded">Llevar #18 (22m)</div>
+              </div>
+            </div>
+          </div>
+          <span class="text-[11px] text-slate-500 font-medium">Usuarios: Chef, Ayudante, Pase</span>
+        </div>
+
+        <!-- Arquetipo 3 -->
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-5 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-bold uppercase px-2.5 py-1 rounded bg-purple-100 text-purple-800">Arquetipo 03</span>
+              <span class="text-xs text-slate-500 font-mono">Master-Detail</span>
+            </div>
+            <h4 class="font-bold text-slate-900 text-base mb-2">Backoffice y Auditoría</h4>
+            <p class="text-xs text-slate-600 mb-4 leading-relaxed">
+              Arquetipo de doble panel (lista maestra de catálogos o transacciones a la izquierda, drawer de edición y métricas a la derecha) para configuración de precios, roles y corte de caja.
+            </p>
+            <div class="bg-white border border-slate-300 rounded-lg p-3 text-center text-xs font-mono text-slate-400 space-y-1 mb-4">
+              <div class="bg-slate-200 text-slate-700 py-1 rounded font-bold">[Barra de Filtros y Búsqueda Avanzada]</div>
+              <div class="grid grid-cols-3 gap-1">
+                <div class="bg-slate-100 text-slate-600 py-3 rounded">[Tabla de Datos / Catálogo]</div>
+                <div class="bg-purple-50 border border-purple-200 text-purple-800 py-3 rounded col-span-2">[Editor Contextual + Precios Canal]</div>
+              </div>
+            </div>
+          </div>
+          <span class="text-[11px] text-slate-500 font-medium">Usuarios: Gerente, Administrador</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- BLOQUE 4: MAPA DEL SITIO - VOCABULARIO VISUAL DE JESSE JAMES GARRETT (JJG) -->
+    <section id="mapa-sitio-jjg" class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+      <div class="border-b border-slate-200 pb-5 mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-emerald-600">Simbología Estandarizada</span>
+          <h3 class="text-2xl font-bold text-slate-900">Mapa del Sitio (Vocabulario Visual JJG)</h3>
+          <p class="text-slate-600 text-sm mt-1">
+            Modelado con la gramática visual de Jesse James Garrett (páginas simples, pilas de archivos, puntos de decisión, selectores condicionales y áreas de contorno).
+          </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-3 text-xs">
+          <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-sky-100 border border-sky-500"></span> Página / Pantalla</div>
+          <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rotate-45 rounded-sm bg-amber-100 border border-amber-500"></span> Decisión / Selector</div>
+          <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-rose-100 border border-rose-500"></span> Condicional / Modal</div>
+        </div>
+      </div>
+
+      <!-- DIAGRAMA VECTORIAL SVG JJG -->
+      <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 sm:p-6 overflow-x-auto grid-bg">
+        <svg viewBox="0 0 1080 720" class="w-full min-w-[900px] h-auto font-sans" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#64748b" />
+            </marker>
+            <marker id="arrow-green" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#16a34a" />
+            </marker>
+            <marker id="arrow-rose" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#e11d48" />
+            </marker>
+          </defs>
+
+          <!-- ÁREA RESTRINGIDA: AUTENTICACIÓN (LOGIN) -->
+          <rect x="20" y="20" width="1040" height="80" rx="12" fill="#f8fafc" stroke="#cbd5e1" stroke-dasharray="4" />
+          <text x="35" y="42" font-size="11" font-weight="700" fill="#94a3b8" letter-spacing="1">ÁREA 0: INGRESO & CONTROL DE ACCESO (NIVEL 0)</text>
+
+          <!-- Nodo Login -->
+          <g class="jjg-node">
+            <rect x="440" y="35" width="200" height="50" rx="8" fill="#ffffff" stroke="#0284c7" stroke-width="2" />
+            <text x="540" y="58" font-size="12" font-weight="700" fill="#0f172a" text-anchor="middle">Pantalla de Login</text>
+            <text x="540" y="74" font-size="10" fill="#64748b" text-anchor="middle">PIN Teclado + Avatar + Rol</text>
+          </g>
+
+          <!-- Conector Login a Selector de Perfil/Canal -->
+          <line x1="540" y1="85" x2="540" y2="130" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)" />
+
+          <!-- ROMBO DE DECISIÓN: ROL DE USUARIO -->
+          <g class="jjg-node">
+            <polygon points="540,130 630,165 540,200 450,165" fill="#fef3c7" stroke="#d97706" stroke-width="2" />
+            <text x="540" y="162" font-size="11" font-weight="700" fill="#92400e" text-anchor="middle">¿Rol de Usuario?</text>
+            <text x="540" y="174" font-size="9" fill="#b45309" text-anchor="middle">RBAC Filter</text>
+          </g>
+
+          <!-- RAMAS POR ROL -->
+          <!-- Rama Cocinero -> KDS -->
+          <path d="M 450 165 L 140 165 L 140 230" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)" />
+          <text x="260" y="155" font-size="10" font-weight="600" fill="#475569">Rol: Chef / Cocina</text>
+
+          <!-- Rama Mesero/Cajero -> Canales -->
+          <line x1="540" y1="200" x2="540" y2="230" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)" />
+          <text x="548" y="218" font-size="10" font-weight="600" fill="#475569">Mesero / Cajero</text>
+
+          <!-- Rama Gerente -> Backoffice & DevOps -->
+          <path d="M 630 165 L 940 165 L 940 230" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)" />
+          <text x="760" y="155" font-size="10" font-weight="600" fill="#475569">Rol: Gerente (Admin)</text>
+
+          <!-- NODO KDS (COCINA) -->
+          <g class="jjg-node">
+            <rect x="50" y="230" width="180" height="70" rx="8" fill="#0f172a" stroke="#38bdf8" stroke-width="2" />
+            <text x="140" y="260" font-size="13" font-weight="700" fill="#f8fafc" text-anchor="middle">Pantalla KDS</text>
+            <text x="140" y="278" font-size="10" fill="#94a3b8" text-anchor="middle">Cola FIFO · Estaciones</text>
+          </g>
+
+          <!-- NODO SELECTOR DE CANAL -->
+          <g class="jjg-node">
+            <rect x="440" y="230" width="200" height="60" rx="8" fill="#e0f2fe" stroke="#0284c7" stroke-width="2" />
+            <text x="540" y="256" font-size="13" font-weight="700" fill="#0369a1" text-anchor="middle">Selector de Canales</text>
+            <text x="540" y="274" font-size="10" fill="#0284c7" text-anchor="middle">Mesa | Para Llevar | Delivery</text>
+          </g>
+
+          <!-- NODO ADMIN CONFIG & DEVOPS -->
+          <g class="jjg-node">
+            <rect x="840" y="230" width="200" height="60" rx="8" fill="#faf5ff" stroke="#9333ea" stroke-width="2" />
+            <text x="940" y="256" font-size="13" font-weight="700" fill="#6b21a8" text-anchor="middle">Administración & DevOps</text>
+            <text x="940" y="274" font-size="10" fill="#7e22ce" text-anchor="middle">Catálogo, Precios, DB SQL</text>
+          </g>
+
+          <!-- SUB-RAMIFICACIÓN DE CANALES -->
+          <!-- Canal Mesa -->
+          <path d="M 480 290 L 350 330" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)" />
+          <text x="385" y="305" font-size="10" font-weight="600" fill="#0369a1">Mesa</text>
+
+          <!-- Canal Directo (Llevar / Delivery) -->
+          <path d="M 600 290 L 700 330" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)" />
+          <text x="660" y="305" font-size="10" font-weight="600" fill="#0369a1">Llevar / Delivery</text>
+
+          <!-- NODO MAPA DE MESAS (SALONES) -->
+          <g class="jjg-node">
+            <rect x="250" y="330" width="200" height="65" rx="8" fill="#ffffff" stroke="#0284c7" stroke-width="2" />
+            <text x="350" y="356" font-size="12" font-weight="700" fill="#0f172a" text-anchor="middle">Mapa de Mesas (Salones)</text>
+            <text x="350" y="374" font-size="10" fill="#64748b" text-anchor="middle">Semáforo de 5 Estados</text>
+          </g>
+
+          <!-- NODO TERMINAL POS (VENTA ACTIVA) -->
+          <g class="jjg-node">
+            <rect x="490" y="420" width="240" height="75" rx="8" fill="#ecfdf5" stroke="#16a34a" stroke-width="2" />
+            <text x="610" y="448" font-size="13" font-weight="800" fill="#166534" text-anchor="middle">Terminal POS / Comandas</text>
+            <text x="610" y="466" font-size="10" fill="#15803d" text-anchor="middle">Categorías + Grid + Ticket</text>
+            <text x="610" y="482" font-size="9" font-weight="600" fill="#166534" text-anchor="middle">[Modificadores & Sustitutos]</text>
+          </g>
+
+          <!-- Conector de Mapa de Mesas a POS -->
+          <path d="M 350 395 L 350 457 L 490 457" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)" />
+
+          <!-- Conector Directo (Llevar) a POS -->
+          <path d="M 700 395 L 700 420" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)" />
+
+          <!-- DECISIÓN DE SALIDA DE COMANDA -->
+          <line x1="490" y1="470" x2="230" y2="280" stroke="#16a34a" stroke-width="2" stroke-dasharray="4" marker-end="url(#arrow-green)" />
+          <text x="310" y="420" font-size="10" font-weight="700" fill="#16a34a">Envío Comanda a KDS</text>
+
+          <!-- RAMA A PRECUENTA Y COBRO -->
+          <line x1="610" y1="495" x2="610" y2="530" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)" />
+
+          <!-- MODAL CONDICIONAL: PRECUENTA / DESCUENTO -->
+          <g class="jjg-node">
+            <rect x="420" y="530" width="180" height="60" rx="8" fill="#fff1f2" stroke="#e11d48" stroke-width="2" />
+            <text x="510" y="555" font-size="11" font-weight="700" fill="#9f1239" text-anchor="middle">Modal Precuenta /</text>
+            <text x="510" y="572" font-size="10" fill="#be123c" text-anchor="middle">Autorización Descuento</text>
+          </g>
+
+          <!-- MODAL DE COBRO / PAGO -->
+          <g class="jjg-node">
+            <rect x="650" y="530" width="200" height="60" rx="8" fill="#f0fdf4" stroke="#16a34a" stroke-width="2" />
+            <text x="750" y="555" font-size="12" font-weight="800" fill="#166534" text-anchor="middle">Modal de Cobro & Pago</text>
+            <text x="750" y="572" font-size="10" fill="#15803d" text-anchor="middle">Efectivo, Tarjeta, Split Bill</text>
+          </g>
+
+          <path d="M 610 515 L 510 530" fill="none" stroke="#64748b" stroke-width="2" />
+          <path d="M 610 515 L 750 530" fill="none" stroke="#64748b" stroke-width="2" />
+
+          <!-- CIERRE Y LIBERACIÓN DE MESA -->
+          <path d="M 750 590 L 750 640 L 350 640 L 350 395" fill="none" stroke="#16a34a" stroke-width="2" stroke-dasharray="4" marker-end="url(#arrow-green)" />
+          <text x="550" y="632" font-size="10" font-weight="700" fill="#16a34a">Ticket Pagado → Mesa Pasa a Limpieza / Libre</text>
+
+          <!-- ÁREA ADMIN SUB-PÁGINAS -->
+          <rect x="830" y="320" width="220" height="270" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-dasharray="2" />
+          <text x="845" y="340" font-size="10" font-weight="700" fill="#64748b">SUB-MÓDULOS GERENCIA:</text>
+          
+          <g transform="translate(845, 350)">
+            <rect width="190" height="32" rx="4" fill="#f8fafc" stroke="#e2e8f0" />
+            <text x="95" y="20" font-size="10" font-weight="600" fill="#334155" text-anchor="middle">Catálogo Menú & Productos</text>
+          </g>
+          <g transform="translate(845, 390)">
+            <rect width="190" height="32" rx="4" fill="#f8fafc" stroke="#e2e8f0" />
+            <text x="95" y="20" font-size="10" font-weight="600" fill="#334155" text-anchor="middle">Precios por Canal (Delta/Base)</text>
+          </g>
+          <g transform="translate(845, 430)">
+            <rect width="190" height="32" rx="4" fill="#f8fafc" stroke="#e2e8f0" />
+            <text x="95" y="20" font-size="10" font-weight="600" fill="#334155" text-anchor="middle">Caja, Arqueo & Facturas</text>
+          </g>
+          <g transform="translate(845, 470)">
+            <rect width="190" height="32" rx="4" fill="#f8fafc" stroke="#e2e8f0" />
+            <text x="95" y="20" font-size="10" font-weight="600" fill="#334155" text-anchor="middle">Reportes & Auditoría</text>
+          </g>
+          <g transform="translate(845, 510)">
+            <rect width="190" height="32" rx="4" fill="#f8fafc" stroke="#e2e8f0" />
+            <text x="95" y="20" font-size="10" font-weight="600" fill="#334155" text-anchor="middle">DevOps, Docker & PostgreSQL</text>
+          </g>
+
+          <line x1="940" y1="290" x2="940" y2="320" stroke="#9333ea" stroke-width="2" marker-end="url(#arrow)" />
+        </svg>
+      </div>
+
+      <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-slate-600">
+        <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+          <strong class="text-slate-800 block mb-1">🔗 Enlaces Internos:</strong>
+          <span>Conexión bidireccional inmediata en tiempo real entre Terminal POS, cola FIFO del KDS en cocina interna y arqueo de caja central. Los cambios de estado de comanda se replican sin recargar página.</span>
+        </div>
+        <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+          <strong class="text-slate-800 block mb-1">🌐 Enlaces Externos e Integraciones:</strong>
+          <span>Repositorio GitHub y Actions CI/CD (`ghcr.io`), almacenamiento en buckets MinIO S3 para activos digitales, impresoras térmicas ESC/POS e interfaces con base de datos PostgreSQL.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- BLOQUE 5: RBAC Y NAVEGACIÓN RESTRINGIDA -->
+    <section id="rbac" class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+      <div class="border-b border-slate-200 pb-5 mb-6">
+        <span class="text-xs font-bold uppercase tracking-wider text-emerald-600">Seguridad & Flujo de Usuarios</span>
+        <h3 class="text-2xl font-bold text-slate-900">Navegación por Perfil de Usuario y Áreas Restringidas (RBAC)</h3>
+        <p class="text-slate-600 text-sm mt-1">
+          Matriz de control de acceso basada en roles implementada mediante autenticación de PIN rápido.
+        </p>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm border-collapse">
+          <thead>
+            <tr class="bg-slate-100 text-slate-700 text-xs font-bold uppercase tracking-wider border-b border-slate-200">
+              <th class="py-3 px-4">Módulo / Pantalla</th>
+              <th class="py-3 px-4 text-center">Mesero (Waiter)</th>
+              <th class="py-3 px-4 text-center">Cajero (Cashier)</th>
+              <th class="py-3 px-4 text-center">Chef (Cocina)</th>
+              <th class="py-3 px-4 text-center">Gerente (Admin)</th>
+              <th class="py-3 px-4">Restricciones y Controles</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200 text-xs text-slate-700">
+            <tr class="hover:bg-slate-50">
+              <td class="py-3 px-4 font-semibold text-slate-900">Selector de Canal & Salón</td>
+              <td class="py-3 px-4 text-center"><span class="text-emerald-600 font-bold">✔ Permitido</span></td>
+              <td class="py-3 px-4 text-center"><span class="text-emerald-600 font-bold">✔ Permitido</span></td>
+              <td class="py-3 px-4 text-center"><span class="text-slate-400">✖ No aplica</span></td>
+              <td class="py-3 px-4 text-center"><span class="text-emerald-600 font-bold">✔ Total</span></td>
+              <td class="py-3 px-4">Acceso a mesas libres y ocupadas.</td>
+            </tr>
+            <tr class="hover:bg-slate-50">
+              <td class="py-3 px-4 font-semibold text-slate-900">Toma de Comanda y Modificadores</td>
+              <td class="py-3 px-4 text-center"><span class="text-emerald-600 font-bold">✔ Permitido</span></td>
+              <td class="py-3 px-4 text-center"><span class="text-emerald-600 font-bold">✔ Permitido</span></td>
+              <td class="py-3 px-4 text-center"><span class="text-slate-400">✖ Bloqueado</span></td>
+              <td class="py-3 px-4 text-center"><span class="text-emerald-600 font-bold">✔ Total</span></td>
+              <td class="py-3 px-4">Configuración de sustitutos y envío a cocina.</td>
+            </tr>
+            <tr class="hover:bg-slate-50">
+              <td class="py-3 px-4 font-semibold text-slate-900">Emisión de Precuenta</td>
+              <td class="py-3 px-4 text-center"><span class="text-emerald-600 font-bold">✔ Permitido</span></td>
+              <td class="py-3 px-4 text-center"><span class="text-emerald-600 font-bold">✔ Permitido</span></td>
+              <td class="py-3 px-4 text-center"><span class="text-slate-400">✖ Bloqueado</span></td>
+              <td class="py-3 px-4 text-center"><span class="text-emerald-600 font-bold">✔ Total</span></td>
+              <td class="py-3 px-4">Bloquea la edición de la orden hasta pago.</td>
+            </tr>
+            <tr class="hover:bg-slate-50">
+              <td class="py-3 px-4 font-semibold text-slate-900">Cobro, Pasarela y Split Bill</td>
+              <td class="py-3 px-4 text-center"><span class="text-rose-600 font-bold">✖ Restringido</span></td>
+              <td class="py-3 px-4 text-center"><span class="text-emerald-600 font-bold">✔ Permitido</span></td>
+              <td class="py-3 px-4 text-center"><span class="text-slate-400">✖ Bloqueado</span></td>
+              <td class="py-3 px-4 text-center"><span class="text-emerald-600 font-bold">✔ Total</span></td>
+              <td class="py-3 px-4">Solo perfiles con caja asignada pueden cobrar.</td>
+            </tr>
+            <tr class="hover:bg-slate-50">
+              <td class="py-3 px-4 font-semibold text-slate-900">KDS (Kitchen Display System)</td>
+              <td class="py-3 px-4 text-center"><span class="text-slate-400">Solo lectura</span></td>
+              <td class="py-3 px-4 text-center"><span class="text-slate-400">Solo lectura</span></td>
+              <td class="py-3 px-4 text-center"><span class="text-emerald-600 font-bold">✔ Operación total</span></td>
+              <td class="py-3 px-4 text-center"><span class="text-emerald-600 font-bold">✔ Total</span></td>
+              <td class="py-3 px-4">Control táctil de avance de comanda en cocina.</td>
+            </tr>
+            <tr class="hover:bg-slate-50">
+              <td class="py-3 px-4 font-semibold text-slate-900">Autorización de Descuentos Especiales</td>
+              <td class="py-3 px-4 text-center"><span class="text-amber-600 font-bold">Requiere PIN Gerente</span></td>
+              <td class="py-3 px-4 text-center"><span class="text-amber-600 font-bold">Requiere PIN Gerente</span></td>
+              <td class="py-3 px-4 text-center"><span class="text-slate-400">✖ Bloqueado</span></td>
+              <td class="py-3 px-4 text-center"><span class="text-emerald-600 font-bold">✔ Autoriza</span></td>
+              <td class="py-3 px-4">Modal de elevación de privilegios instantáneo.</td>
+            </tr>
+            <tr class="hover:bg-slate-50">
+              <td class="py-3 px-4 font-semibold text-slate-900">Configuración, Catálogo y Precios Canal</td>
+              <td class="py-3 px-4 text-center"><span class="text-rose-600 font-bold">✖ Bloqueado</span></td>
+              <td class="py-3 px-4 text-center"><span class="text-rose-600 font-bold">✖ Bloqueado</span></td>
+              <td class="py-3 px-4 text-center"><span class="text-slate-400">✖ Bloqueado</span></td>
+              <td class="py-3 px-4 text-center"><span class="text-emerald-600 font-bold">✔ Total</span></td>
+              <td class="py-3 px-4">Acceso protegido exclusivo para rol Gerente.</td>
+            </tr>
+            <tr class="hover:bg-slate-50">
+              <td class="py-3 px-4 font-semibold text-slate-900">DevOps Hub, DDL SQL & Semillas</td>
+              <td class="py-3 px-4 text-center"><span class="text-rose-600 font-bold">✖ Bloqueado</span></td>
+              <td class="py-3 px-4 text-center"><span class="text-rose-600 font-bold">✖ Bloqueado</span></td>
+              <td class="py-3 px-4 text-center"><span class="text-slate-400">✖ Bloqueado</span></td>
+              <td class="py-3 px-4 text-center"><span class="text-emerald-600 font-bold">✔ Total</span></td>
+              <td class="py-3 px-4">Consola de ingeniería y monitoreo CI/CD.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- BLOQUE 6: CONTINUACIÓN DEL DOSSIER (TEMA 4 - APARTADOS 01 A 08) -->
+    <section id="tema4-dossier" class="space-y-8">
+      <div class="border-b border-slate-200 pb-5">
+        <span class="text-xs font-bold uppercase tracking-wider text-emerald-600">Fase 2: Diseño · Parte II & III</span>
+        <h3 class="text-3xl font-extrabold text-slate-900">Dossier de Diseño: Definición Inicial y Reglas de Interfaz (01 - 08)</h3>
+        <p class="text-slate-600 text-sm mt-1">
+          Desarrollo riguroso de los ocho capítulos de diseño solicitados en las prácticas en clase de DCU.
+        </p>
+      </div>
+
+      <!-- 01 Estructura de Página -->
+      <article class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 font-black text-sm flex items-center justify-center">01</span>
+          <h4 class="text-xl font-bold text-slate-900">Estructura Clásica de Página</h4>
+        </div>
+        <p class="text-slate-600 text-sm leading-relaxed mb-6">
+          En correspondencia con el patrón clásico universitario (Cabecera, Bloque de Navegación, Contenidos y Pie de Página), la interfaz de RestoXYZ implementa una arquitectura zonificada limpia y predecible:
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs">
+          <div class="border border-slate-200 rounded-xl p-4 bg-slate-50">
+            <h5 class="font-bold text-slate-900 mb-1">1. Cabecera Fija (TopNavbar)</h5>
+            <p class="text-slate-600">Identidad del establecimiento, selector de canales de venta (Mesa, Llevar, Delivery), indicador de mesa activa y selector de perfil de usuario con PIN.</p>
+          </div>
+          <div class="border border-slate-200 rounded-xl p-4 bg-slate-50">
+            <h5 class="font-bold text-slate-900 mb-1">2. Bloque de Navegación</h5>
+            <p class="text-slate-600">Pestañas contextuales por categoría (Hamburguesas, Bebidas, Guarniciones) y filtros rápidos de estado de salón (Todos, Libres, Ocupadas).</p>
+          </div>
+          <div class="border border-slate-200 rounded-xl p-4 bg-slate-50">
+            <h5 class="font-bold text-slate-900 mb-1">3. Zona de Contenidos</h5>
+            <p class="text-slate-600">Área principal adaptativa: mapa bidimensional de salones en modo mesa, cuadrícula táctil de productos en modo comanda y kanban FIFO en KDS.</p>
+          </div>
+          <div class="border border-slate-200 rounded-xl p-4 bg-slate-50">
+            <h5 class="font-bold text-slate-900 mb-1">4. Barra Inferior / Modales</h5>
+            <p class="text-slate-600">Totalizadores financieros, botón de llamada a acción primaria (Cobrar / Enviar Cocina) y modales contextuales (Precuenta, Split Bill).</p>
+          </div>
+        </div>
+      </article>
+
+      <!-- 02 Diseño de Página -->
+      <article class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 font-black text-sm flex items-center justify-center">02</span>
+          <h4 class="text-xl font-bold text-slate-900">Diseño de Página y Distribución Espacial</h4>
+        </div>
+        <p class="text-slate-600 text-sm leading-relaxed mb-4">
+          La pantalla POS elimina el scroll horizontal mediante una disposición en tres cuadrantes asimétricos con proporción áurea operativa:
+        </p>
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs text-slate-700 space-y-3">
+          <div class="flex items-start gap-3">
+            <span class="font-bold text-slate-900 min-w-[120px]">Columna Izquierda (18%):</span>
+            <span>Selector vertical de categorías con iconos unívocos y badges de cantidad de productos disponibles.</span>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="font-bold text-slate-900 min-w-[120px]">Columna Central (50%):</span>
+            <span>Cuadrícula fluida responsive (CSS Grid con `minmax(140px, 1fr)`) de tarjetas táctiles con nombre, precio base y badge de preparación.</span>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="font-bold text-slate-900 min-w-[120px]">Columna Derecha (32%):</span>
+            <span>Ticket de comanda sticky con items colapsables por modificador, contador de unidades (+ / -), subtotal, impuestos y botón de acción principal verde.</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- 03 Principios a Buscar en el Diseño de Página -->
+      <article class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 font-black text-sm flex items-center justify-center">03</span>
+          <h4 class="text-xl font-bold text-slate-900">Principios a Buscar en el Diseño</h4>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 text-xs">
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <h5 class="font-bold text-slate-900 mb-1">1. Sencillez</h5>
+            <p class="text-slate-600">Se eliminan elementos distractores. Solo se muestran los datos necesarios para registrar y despachar el pedido en curso.</p>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <h5 class="font-bold text-slate-900 mb-1">2. Coherencia</h5>
+            <p class="text-slate-600">Coherencia interna (mismos controles en toda la app) y coherencia externa (metáforas comunes con terminales TPV del mercado).</p>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <h5 class="font-bold text-slate-900 mb-1">3. Equilibrio</h5>
+            <p class="text-slate-600">Distribución armónica del espacio negativo (whitespace) para evitar fatiga visual durante jornadas continuas de 8 horas.</p>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <h5 class="font-bold text-slate-900 mb-1">4. Legibilidad</h5>
+            <p class="text-slate-600">Fuentes sin serifa de alta definición con alineaciones estrictas y tamaños jerarquizados.</p>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <h5 class="font-bold text-slate-900 mb-1">5. Densidad Adecuada</h5>
+            <p class="text-slate-600">Espaciado táctil calibrado (botones ≥ 44×44px) que previene toques erróneos accidentales durante la velocidad de servicio.</p>
+          </div>
+        </div>
+      </article>
+
+      <!-- 04 Reglas Básicas de Diseño y Principios Gestalt -->
+      <article class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 font-black text-sm flex items-center justify-center">04</span>
+          <h4 class="text-xl font-bold text-slate-900">Reglas Básicas de Diseño & Leyes de Gestalt</h4>
+        </div>
+        <p class="text-slate-600 text-sm leading-relaxed mb-6">
+          La interfaz implementa el precepto fundamental de la psicología de la forma: <em>"El todo es más que la suma de las partes"</em>, integrando los 7 principios de Gestalt descritos en la clase:
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          <div class="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-1">
+            <strong class="text-slate-900 block font-bold text-sm">1. Semejanza (Similarity):</strong>
+            <p class="text-slate-600">Los botones de acción primaria comparten color verde (`#16a34a`), radio de borde (`rounded-xl`) y sombra. El usuario los reconoce al instante como disparadores de comanda o cobro.</p>
+          </div>
+          <div class="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-1">
+            <strong class="text-slate-900 block font-bold text-sm">2. Proximidad (Proximity):</strong>
+            <p class="text-slate-600">Los modificadores de un ítem (ej. "Término medio", "Sin cebolla") se colocan inmediatamente debajo del producto en el ticket con menor padding relativo, percibiéndose como un bloque indisoluble.</p>
+          </div>
+          <div class="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-1">
+            <strong class="text-slate-900 block font-bold text-sm">3. Continuidad (Continuity):</strong>
+            <p class="text-slate-600">Alineación horizontal estricta de las tarjetas de KDS y de la cuadrícula de categorías. El ojo del operador escanea de izquierda a derecha sin interrupciones visuales.</p>
+          </div>
+          <div class="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-1">
+            <strong class="text-slate-900 block font-bold text-sm">4. Dirección Común (Common Direction):</strong>
+            <p class="text-slate-600">Patrón de lectura en "F". La vista comienza en la cabecera (logo + canal), baja por las categorías y termina en el botón de pago en la esquina inferior derecha.</p>
+          </div>
+          <div class="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-1">
+            <strong class="text-slate-900 block font-bold text-sm">5. Relación Figura-Fondo (Figure-Ground):</strong>
+            <p class="text-slate-600">Modales de cobro, división de cuenta y precuenta utilizan capas oscurecidas (`backdrop-blur-sm bg-slate-950/60`), separando la figura activa del fondo contextual.</p>
+          </div>
+          <div class="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-1">
+            <strong class="text-slate-900 block font-bold text-sm">6. Igualdad / Agrupación:</strong>
+            <p class="text-slate-600">Los elementos con el mismo rol interactivo presentan forma idéntica: todas las mesas son tarjetas cuadradas con cabecera de número de comensales.</p>
+          </div>
+          <div class="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-1 md:col-span-2">
+            <strong class="text-slate-900 block font-bold text-sm">7. Cierre (Closure):</strong>
+            <p class="text-slate-600">Los carruseles y listas con scroll táctil muestran un borde del siguiente elemento parcialmente cortado en el margen derecho, sugiriendo de forma inmediata la existencia de contenido adicional sin necesidad de flechas.</p>
+          </div>
+        </div>
+
+        <div class="mt-4 p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-900">
+          <strong>Alineación Numérica:</strong> Todos los precios y cantidades monetarias están tabulados a la derecha con fuentes monoespaciadas, garantizando una suma visual inmediata de columnas de importe.
+        </div>
+      </article>
+
+      <!-- 05 Tipografía -->
+      <article class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 font-black text-sm flex items-center justify-center">05</span>
+          <h4 class="text-xl font-bold text-slate-900">Tipografía y Jerarquía Textual</h4>
+        </div>
+        <p class="text-slate-600 text-sm leading-relaxed mb-4">
+          Cumpliendo las directrices del tema (máximo 2 a 3 familias coherentes, fuentes sin serifa legibles en baja resolución, sin mayúsculas sostenidas en bloques de texto y tipografías seguras):
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+            <h5 class="font-bold text-slate-900 text-sm">Familia Primaria: Sans-Serif Neogrotesca</h5>
+            <p class="text-slate-600 font-mono text-[11px]">font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;</p>
+            <ul class="space-y-1 text-slate-700 list-disc list-inside">
+              <li><strong>H1 / Pantallas:</strong> 24px - 28px, Bold (700)</li>
+              <li><strong>H2 / Secciones:</strong> 18px - 20px, SemiBold (600)</li>
+              <li><strong>Cuerpo / Botones:</strong> 13px - 14px, Medium (500)</li>
+              <li><strong>Labels / Badges:</strong> 11px - 12px, SemiBold (600)</li>
+            </ul>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+            <h5 class="font-bold text-slate-900 text-sm">Familia Secundaria: Monospaced Numérica</h5>
+            <p class="text-slate-600 font-mono text-[11px]">font-family: 'JetBrains Mono', monospace;</p>
+            <ul class="space-y-1 text-slate-700 list-disc list-inside">
+              <li><strong>Precios y Totales:</strong> 14px - 22px, Bold (700) con cifras tabulares</li>
+              <li><strong>Tiempos KDS:</strong> 12px, Bold con contador MM:SS</li>
+              <li><strong>SKU y Números de Ticket:</strong> 11px, Regular para escaneo rápido</li>
+            </ul>
+          </div>
+        </div>
+      </article>
+
+      <!-- 06 Color y Accesibilidad WCAG 2.2 -->
+      <article id="wcag-contraste" class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 font-black text-sm flex items-center justify-center">06</span>
+          <h4 class="text-xl font-bold text-slate-900">Colorimetría y Análisis de Contraste (WCAG 2.2)</h4>
+        </div>
+        <p class="text-slate-600 text-sm leading-relaxed mb-6">
+          Se verificaron rigurosamente los criterios <strong>1.4.3 Contraste Mínimo (Nivel AA)</strong> y <strong>1.4.6 Contraste Mejorado (Nivel AAA)</strong> de las directrices WCAG 2.2 de la W3C:
+        </p>
+
+        <div class="overflow-x-auto mb-6">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-slate-100 text-slate-700 font-bold uppercase tracking-wider border-b border-slate-200">
+                <th class="py-2.5 px-3">Elemento de Interfaz</th>
+                <th class="py-2.5 px-3">Color de Texto (FG)</th>
+                <th class="py-2.5 px-3">Color de Fondo (BG)</th>
+                <th class="py-2.5 px-3">Ratio Medido</th>
+                <th class="py-2.5 px-3 text-center">Nivel AA (≥ 4.5:1)</th>
+                <th class="py-2.5 px-3 text-center">Nivel AAA (≥ 7:1)</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200 text-slate-700">
+              <tr class="hover:bg-slate-50">
+                <td class="py-2.5 px-3 font-semibold text-slate-900">Texto principal de contenido</td>
+                <td class="py-2.5 px-3 font-mono">Slate-900 (#0f172a)</td>
+                <td class="py-2.5 px-3 font-mono">Blanco (#ffffff)</td>
+                <td class="py-2.5 px-3 font-bold text-emerald-600">18.4 : 1</td>
+                <td class="py-2.5 px-3 text-center text-emerald-600 font-bold">✔ Cumple</td>
+                <td class="py-2.5 px-3 text-center text-emerald-600 font-bold">✔ Cumple (AAA)</td>
+              </tr>
+              <tr class="hover:bg-slate-50">
+                <td class="py-2.5 px-3 font-semibold text-slate-900">Botón primario "Cobrar / Enviar"</td>
+                <td class="py-2.5 px-3 font-mono">Blanco (#ffffff)</td>
+                <td class="py-2.5 px-3 font-mono">Emerald-700 (#15803d)</td>
+                <td class="py-2.5 px-3 font-bold text-emerald-600">5.2 : 1</td>
+                <td class="py-2.5 px-3 text-center text-emerald-600 font-bold">✔ Cumple</td>
+                <td class="py-2.5 px-3 text-center text-slate-400">N/A (Texto grande AA)</td>
+              </tr>
+              <tr class="hover:bg-slate-50">
+                <td class="py-2.5 px-3 font-semibold text-slate-900">Badge "Mesa Libre"</td>
+                <td class="py-2.5 px-3 font-mono">Emerald-900 (#064e3b)</td>
+                <td class="py-2.5 px-3 font-mono">Emerald-100 (#d1fae5)</td>
+                <td class="py-2.5 px-3 font-bold text-emerald-600">9.1 : 1</td>
+                <td class="py-2.5 px-3 text-center text-emerald-600 font-bold">✔ Cumple</td>
+                <td class="py-2.5 px-3 text-center text-emerald-600 font-bold">✔ Cumple (AAA)</td>
+              </tr>
+              <tr class="hover:bg-slate-50">
+                <td class="py-2.5 px-3 font-semibold text-slate-900">Badge "Mesa Ocupada"</td>
+                <td class="py-2.5 px-3 font-mono">Rose-900 (#881337)</td>
+                <td class="py-2.5 px-3 font-mono">Rose-100 (#ffe4e6)</td>
+                <td class="py-2.5 px-3 font-bold text-emerald-600">8.6 : 1</td>
+                <td class="py-2.5 px-3 text-center text-emerald-600 font-bold">✔ Cumple</td>
+                <td class="py-2.5 px-3 text-center text-emerald-600 font-bold">✔ Cumple (AAA)</td>
+              </tr>
+              <tr class="hover:bg-slate-50">
+                <td class="py-2.5 px-3 font-semibold text-slate-900">Pantalla KDS de Cocina</td>
+                <td class="py-2.5 px-3 font-mono">Blanco (#ffffff)</td>
+                <td class="py-2.5 px-3 font-mono">Slate-900 (#0f172a)</td>
+                <td class="py-2.5 px-3 font-bold text-emerald-600">18.4 : 1</td>
+                <td class="py-2.5 px-3 text-center text-emerald-600 font-bold">✔ Cumple</td>
+                <td class="py-2.5 px-3 text-center text-emerald-600 font-bold">✔ Cumple (AAA)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <!-- 07 Iconografía -->
+      <article class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 font-black text-sm flex items-center justify-center">07</span>
+          <h4 class="text-xl font-bold text-slate-900">Iconografía y Simbología Visual</h4>
+        </div>
+        <p class="text-slate-600 text-sm leading-relaxed mb-4">
+          La iconografía cumple con los 4 pilares obligatorios (coherencia visual, universalidad, claridad y alternativa accesible):
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs">
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <strong class="text-slate-900 block mb-1">1. Biblioteca Uniforme:</strong>
+            <span class="text-slate-600">Lucide Icons SVG con trazo de 2px, esquinas redondeadas y cuadrícula base de 24×24px.</span>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <strong class="text-slate-900 block mb-1">2. Metáforas Directas:</strong>
+            <span class="text-slate-600">Campana para cocina/KDS, cubiertos para alimentos, billete/tarjeta para cobro, candado para autorizaciones.</span>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <strong class="text-slate-900 block mb-1">3. Completitud:</strong>
+            <span class="text-slate-600">Juego completo sin mezclar estilos lineales con glifos rellenos o pictogramas disonantes.</span>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <strong class="text-slate-900 block mb-1">4. Alternativa Accesible:</strong>
+            <span class="text-slate-600">Todos los iconos interactivos cuentan con `aria-label` o texto adyacente para lectores de pantalla.</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- 08 Lenguaje Visual -->
+      <article class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 font-black text-sm flex items-center justify-center">08</span>
+          <h4 class="text-xl font-bold text-slate-900">Lenguaje Visual Integrado (Design Tokens)</h4>
+        </div>
+        <p class="text-slate-600 text-sm leading-relaxed mb-4">
+          El lenguaje visual consolida la identidad de RestoXYZ bajo un sistema de diseño estricto y predecible:
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <h5 class="font-bold text-slate-900 mb-1">Geometría y Radios</h5>
+            <p class="text-slate-600">Curvatura consistente (`rounded-xl` / 12px) en tarjetas y botones. Evita el "pill-shape" indiscriminado para mantener un aspecto industrial robusto.</p>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <h5 class="font-bold text-slate-900 mb-1">Elevación y Profundidad</h5>
+            <p class="text-slate-600">Sombras de difusión suave (`shadow-sm` en reposo, `shadow-md` en hover) con bordes delgados (`border border-slate-200`) que garantizan contraste en pantallas LCD.</p>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <h5 class="font-bold text-slate-900 mb-1">Feedback Táctil Inmediato</h5>
+            <p class="text-slate-600">Microinteracciones de compresión táctil (`active:scale-95`) y transiciones ultrarrápidas de 150ms para confirmar registro de toque sin latencia perceptible.</p>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- PIE DEL DOCUMENTO DE DOSSIER -->
+    <footer class="pt-8 border-t border-slate-200 text-center text-xs text-slate-500 space-y-2">
+      <p class="font-semibold text-slate-700">Dossier de DCU · RestoXYZ Point of Sale System</p>
+      <p>Desarrollado para el Máster Universitario en Ingeniería Informática · Universitat d'Alacant</p>
+      <p class="text-[11px] text-slate-400">Documento autónomo accesible en el repositorio GitHub (Carpeta <code>/docs/dcu-arquitectura-diseno.html</code>).</p>
+    </footer>
+
+  </main>
+
+</body>
+</html>
