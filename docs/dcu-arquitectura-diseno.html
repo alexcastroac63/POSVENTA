@@ -467,6 +467,30 @@
           </div>
           <span class="text-[11px] text-slate-500 font-medium">Usuarios: Gerente, Administrador</span>
         </div>
+
+        <!-- Arquetipo 4 -->
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-5 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-bold uppercase px-2.5 py-1 rounded bg-amber-100 text-amber-800">Arquetipo 04</span>
+              <span class="text-xs text-slate-500 font-mono">Omnichannel Gateway</span>
+            </div>
+            <h4 class="font-bold text-slate-900 text-base mb-2">Selector de Canales de Venta</h4>
+            <p class="text-xs text-slate-600 mb-4 leading-relaxed">
+              Puerta de enlace omnicanal post-login: 3 tarjetas de alto impacto táctil (Mesa, Llevar, Delivery) con sub-selector de plataformas agregadoras y panel inferior de telemetría de hardware/sucursal.
+            </p>
+            <div class="bg-white border border-slate-300 rounded-lg p-3 text-center text-xs font-mono text-slate-400 space-y-1 mb-4">
+              <div class="bg-slate-200 text-slate-700 py-1 rounded font-bold">[Cabecera: Canales | Caja | Reportes | Logout]</div>
+              <div class="grid grid-cols-3 gap-1">
+                <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 py-3 rounded">[Canal A: Mesa]</div>
+                <div class="bg-sky-50 border border-sky-200 text-sky-800 py-3 rounded">[Canal B: Llevar]</div>
+                <div class="bg-amber-50 border border-amber-200 text-amber-800 py-3 rounded">[Canal C: Delivery]</div>
+              </div>
+              <div class="bg-slate-100 text-slate-600 py-1 rounded text-[10px]">[Footer: Sucursal | Terminal | Operador]</div>
+            </div>
+          </div>
+          <span class="text-[11px] text-slate-500 font-medium">Usuarios: Mesero, Cajero, Gerente</span>
+        </div>
       </div>
     </section>
 
@@ -791,6 +815,72 @@
           <div class="border border-slate-200 rounded-xl p-4 bg-slate-50">
             <h5 class="font-bold text-slate-900 mb-1">4. Barra Inferior / Modales</h5>
             <p class="text-slate-600">Totalizadores financieros, botón de llamada a acción primaria (Cobrar / Enviar Cocina) y modales contextuales (Precuenta, Split Bill).</p>
+          </div>
+        </div>
+
+        <!-- 01.1 Estructura Específica: Página de Canales (Gateway Omnicanal) -->
+        <div class="mt-6 pt-6 border-t border-slate-200">
+          <div class="flex items-center justify-between mb-3">
+            <h5 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+              Anatomía y Estructura de la Página de Canales (Selector Omnicanal)
+            </h5>
+            <span class="text-[10px] font-mono uppercase bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-bold">Arquetipo 04 · Nivel 1</span>
+          </div>
+          <p class="text-slate-600 text-xs mb-4 leading-relaxed">
+            La <strong>Página de Canales</strong> (<code>ChannelSelectScreen</code>) opera como el <strong>Hub Distribuidor de Flujo</strong> principal del sistema POS tras la autenticación de mesa/caja. Su estructura adapta el modelo clásico de 4 bloques a la ergonomía táctil rápida:
+          </p>
+
+          <div class="space-y-3 text-xs">
+            <!-- Bloque 1: Cabecera -->
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5">
+              <span class="font-bold text-slate-900 block mb-1 text-emerald-700">1. Cabecera Superior Fija (TopNavbar) [h: 56px]</span>
+              <ul class="list-disc list-inside text-slate-600 space-y-1">
+                <li><strong>Menú de Nivel Superior:</strong> Pestaña activa "Canales" (con icono <code>UtensilsCrossed</code>), "Caja & Turnos" y "Reportes & Auditoría" con control de visibilidad según RBAC.</li>
+                <li><strong>Identidad del Operador:</strong> Avatar fotográfico, nombre del usuario autenticado y rol activo (Mesero / Cajero / Gerente).</li>
+                <li><strong>Acción Crítica de Escape:</strong> Botón directo "Cerrar Sesión" (Logout) con estilo de advertencia no disruptiva (rose-50/rose-700) para volver al PIN Login en 1 toque.</li>
+              </ul>
+            </div>
+
+            <!-- Bloque 2: Navegación & Contexto de Enrutamiento -->
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5">
+              <span class="font-bold text-slate-900 block mb-1 text-sky-700">2. Bloque de Navegación Funcional (Contexto de Despacho)</span>
+              <p class="text-slate-600">
+                La pantalla misma constituye el <em>primer nivel de toma de decisiones</em> (Hick's Law: 3 opciones directas sin submenús anidados). Elimina barras laterales para maximizar el área de impacto visual y concentrar la atención del usuario en el canal de venta correspondiente.
+              </p>
+            </div>
+
+            <!-- Bloque 3: Zona Central de Contenidos -->
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5">
+              <span class="font-bold text-slate-900 block mb-1 text-amber-700">3. Zona Central de Contenidos (Omnichannel Grid · 3 Tarjetas Táctiles)</span>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-2">
+                <div class="bg-white border-2 border-slate-200 rounded-xl p-3">
+                  <span class="font-bold text-slate-900 block text-[11px] uppercase text-emerald-700">Canal A: MESA (Salón)</span>
+                  <p class="text-[11px] text-slate-500 mt-1">Icono de cubiertos (80x80px). Muestra contador en tiempo real de mesas ocupadas. Transiciona al <strong>Mapa de Mesas (Salón)</strong> en 1 clic.</p>
+                </div>
+                <div class="bg-white border-2 border-slate-200 rounded-xl p-3">
+                  <span class="font-bold text-slate-900 block text-[11px] uppercase text-sky-700">Canal B: LLEVAR (Take Out)</span>
+                  <p class="text-[11px] text-slate-500 mt-1">Icono de bolsa de compras. Aplica tarifa base de mostrador. Omite el mapa de mesas y salta directamente al <strong>Terminal POS Comanda</strong> (0 esperas).</p>
+                </div>
+                <div class="bg-white border-2 border-slate-200 rounded-xl p-3">
+                  <span class="font-bold text-slate-900 block text-[11px] uppercase text-amber-700">Canal C: PLATAFORMAS (Delivery)</span>
+                  <p class="text-[11px] text-slate-500 mt-1">Icono de reparto en moto. Incluye subselector segmented control (Uber Eats / Glovo / Rappi) y botón CTA con apertura de orden y delta de comisiones.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bloque 4: Pie de Página / Barra de Hardware -->
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5">
+              <span class="font-bold text-slate-900 block mb-1 text-purple-700">4. Pie de Página / Barra de Telemetría y Hardware</span>
+              <p class="text-slate-600 mb-2">
+                A diferencia de footers web con enlaces corporativos irrelevantes en punto de venta, el pie de la página de canales funciona como <strong>dock de auditoría de hardware y terminal</strong>:
+              </p>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px]">
+                <div class="bg-white border border-slate-200 rounded-lg p-2 font-mono"><strong>SUCURSAL:</strong> Centro Histórico Principal</div>
+                <div class="bg-white border border-slate-200 rounded-lg p-2 font-mono"><strong>EQUIPO / TERMINAL:</strong> TPV-M01 (iPad Pro 11")</div>
+                <div class="bg-white border border-slate-200 rounded-lg p-2 font-mono"><strong>USUARIO ACTIVO:</strong> Carlos Ruiz (MESERO)</div>
+              </div>
+            </div>
           </div>
         </div>
       </article>
